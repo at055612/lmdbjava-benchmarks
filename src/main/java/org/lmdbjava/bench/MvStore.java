@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,15 +31,19 @@ import static org.openjdk.jmh.annotations.Scope.Benchmark;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 import net.jpountz.xxhash.XXHash32;
 import net.jpountz.xxhash.XXHashFactory;
-import java.util.Iterator;
-
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
+import org.h2.mvstore.Cursor;
+import org.h2.mvstore.DataUtils;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
+import org.h2.mvstore.WriteBuffer;
+import org.h2.mvstore.type.BasicDataType;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -63,10 +67,10 @@ public class MvStore {
   @Benchmark
   public void readCrc(final Reader r, final Blackhole bh) {
     r.crc.reset();
-    final Iterator<byte[]> iter = r.map.keyIterator(null);
-    while (iter.hasNext()) {
-      final byte[] k = iter.next();
-      final byte[] v = r.map.get(k);
+    final Cursor<byte[], byte[]> cursor = r.map.cursor(null, null, false);
+    while (cursor.hasNext()) {
+      final byte[] k = cursor.next();
+      final byte[] v = cursor.getValue();
       r.crc.update(k);
       r.crc.update(v);
     }
@@ -81,34 +85,35 @@ public class MvStore {
       } else {
         r.wkb.putStringWithoutLengthUtf8(0, r.padKey(key));
       }
-      bh.consume(r.map.get(copyOf(r.wkb.byteArray(), r.keySize)));
+      bh.consume(r.map.get(r.wkb.byteArray()));
     }
   }
 
   @Benchmark
   public void readRev(final Reader r, final Blackhole bh) {
-    for (long i = r.map.sizeAsLong() - 1; i >= 0; i--) {
-      final byte[] k = r.map.getKey(i);
-      bh.consume(r.map.get(k));
+    final Cursor<byte[], byte[]> cursor = r.map.cursor(null, null, true);
+    while (cursor.hasNext()) {
+      cursor.next();
+      bh.consume(cursor.getValue());
     }
   }
 
   @Benchmark
   public void readSeq(final Reader r, final Blackhole bh) {
-    final Iterator<byte[]> iter = r.map.keyIterator(null);
-    while (iter.hasNext()) {
-      final byte[] k = iter.next();
-      bh.consume(r.map.get(k));
+    final Cursor<byte[], byte[]> cursor = r.map.cursor(null, null, false);
+    while (cursor.hasNext()) {
+      cursor.next();
+      bh.consume(cursor.getValue());
     }
   }
 
   @Benchmark
   public void readXxh64(final Reader r, final Blackhole bh) {
     long result = 0;
-    final Iterator<byte[]> iter = r.map.keyIterator(null);
-    while (iter.hasNext()) {
-      final byte[] k = iter.next();
-      final byte[] v = r.map.get(k);
+    final Cursor<byte[], byte[]> cursor = r.map.cursor(null, null, false);
+    while (cursor.hasNext()) {
+      final byte[] k = cursor.next();
+      final byte[] v = cursor.getValue();
       result += r.xxh.hash(k, 0, k.length, 0);
       result += r.xxh.hash(v, 0, v.length, 0);
     }
@@ -146,7 +151,11 @@ public class MvStore {
           .fileName(new File(tmp, "mvstore.db").getAbsolutePath())
           .autoCommitDisabled()
           .open();
-      map = s.openMap("ba2ba");
+      final MVMap.Builder<byte[], byte[]> builder = new MVMap.Builder<byte[], byte[]>()
+              .keyType(BADataType.INSTANCE)
+              .valueType(BADataType.INSTANCE)
+              .singleWriter();
+      map = s.openMap("ba2ba", builder);
     }
 
     @Override
@@ -219,4 +228,38 @@ public class MvStore {
     }
   }
 
+  public static final class BADataType extends BasicDataType<byte[]> {
+    public static final BADataType INSTANCE = new BADataType();
+
+    private BADataType() { }
+
+    @Override
+    public int getMemory(final byte[] data) {
+      return data.length;
+    }
+
+    @Override
+    public void write(final WriteBuffer buff, final byte[] data) {
+      buff.putVarInt(data.length);
+      buff.put(data);
+    }
+
+    @Override
+    public byte[] read(final ByteBuffer buff) {
+      final int size = DataUtils.readVarInt(buff);
+      final byte[] data = new byte[size];
+      buff.get(data);
+      return data;
+    }
+
+    @Override
+    public byte[][] createStorage(final int size) {
+      return new byte[size][];
+    }
+
+    @Override
+    public int compare(final byte[] one, final byte[] two) {
+      return Arrays.compare(one, two);
+    }
+  }
 }
