@@ -2,7 +2,7 @@
  * #%L
  * LmdbJava Benchmarks
  * %%
- * Copyright (C) 2016 - 2022 The LmdbJava Open Source Project
+ * Copyright (C) 2016 - 2025 The LmdbJava Open Source Project
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,24 +20,24 @@
 
 package org.lmdbjava.bench;
 
-import static java.lang.Integer.BYTES;
-import static java.lang.System.getProperty;
-import static java.lang.System.out;
-import static jnr.posix.POSIXFactory.getPOSIX;
-import static org.openjdk.jmh.annotations.Scope.Benchmark;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.zip.CRC32;
-
-import jnr.posix.FileStat;
-import jnr.posix.POSIX;
 import org.agrona.collections.IntHashSet;
 import org.apache.commons.math3.random.BitsStreamGenerator;
 import org.apache.commons.math3.random.MersenneTwister;
 import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.infra.BenchmarkParams;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.zip.CRC32;
+
+import static java.lang.Integer.BYTES;
+import static java.lang.System.getProperty;
+import static java.lang.System.out;
+import static org.openjdk.jmh.annotations.Scope.Benchmark;
 
 /**
  * Common JMH {@link State} superclass for all DB benchmark states.
@@ -53,7 +53,7 @@ public class Common {
 
   static final byte[] RND_MB = new byte[1_048_576];
   static final int STRING_KEY_LENGTH = 16;
-  private static final POSIX POSIX = getPOSIX();
+//  private static final POSIX POSIX = getPOSIX();
   private static final BitsStreamGenerator RND = new MersenneTwister();
   private static final int S_BLKSIZE = 512; // from sys/stat.h
   private static final File TMP_BENCH;
@@ -67,7 +67,7 @@ public class Common {
    * (taking 4 bytes) or as zero-padded 16 byte strings. Storing keys as
    * integers offers a major performance gain.
    */
-  @Param("true")
+  @Param({"true", "false"})
   boolean intKey;
 
   /**
@@ -83,6 +83,7 @@ public class Common {
    * Number of entries to read/write to the database.
    */
   @Param("1000000")
+//  @Param("100")
   int num;
 
   /**
@@ -93,7 +94,7 @@ public class Common {
    * and the keys will instead be inserted (and read back via "readKeys") in a
    * random order.
    */
-  @Param("true")
+  @Param({"true", "false"})
   boolean sequential;
 
   File tmp;
@@ -112,10 +113,22 @@ public class Common {
   @Param("100")
   int valSize;
 
+  private static final String SCRATCH_SUB_DIR = "lmdbjava-benchmark-scratch";
+
   static {
     RND.nextBytes(RND_MB);
-    final String tmpParent = getProperty("java.io.tmpdir");
-    TMP_BENCH = new File(tmpParent, "lmdbjava-benchmark-scratch");
+    String customParent = getProperty("lmdb.benchmark.dir");
+    if (customParent != null && !customParent.isBlank()) {
+      try {
+        Files.createDirectories(Path.of(customParent.trim()));
+      } catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
+      TMP_BENCH = new File(customParent, SCRATCH_SUB_DIR);
+    } else {
+      final String tmpParent = getProperty("java.io.tmpdir");
+      TMP_BENCH = new File(tmpParent, SCRATCH_SUB_DIR);
+    }
   }
 
   public void setup(final BenchmarkParams b) throws IOException {
@@ -171,8 +184,13 @@ public class Common {
       if (f.isDirectory()) {
         throw new UnsupportedOperationException("impl created directory");
       }
-      final FileStat stat = POSIX.stat(f.getAbsolutePath());
-      bytes += stat.blocks() * S_BLKSIZE;
+      try {
+        bytes += Files.size(f.toPath());
+      } catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
+//      final FileStat stat = POSIX.stat(f.getAbsolutePath());
+//      bytes += stat.blocks() * S_BLKSIZE;
     }
     out.println("\nBytes\t" + desc + "\t" + bytes + "\t" + dir.getName());
   }

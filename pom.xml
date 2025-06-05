@@ -21,134 +21,140 @@
     <uberjar.name>benchmarks</uberjar.name>
   </properties>
   <dependencies>
-    <dependency>
-      <groupId>com.github.jnr</groupId>
-      <artifactId>jnr-posix</artifactId>
-      <version>3.0.57</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.github.jnr</groupId>
-          <artifactId>jnr-constants</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2-mvstore</artifactId>
-      <version>1.4.200</version>
-    </dependency>
-    <dependency>
-      <groupId>io.github.microutils</groupId>
-      <artifactId>kotlin-logging</artifactId>
-      <version>1.7.10</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-api</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.jetbrains.kotlin</groupId>
-          <artifactId>kotlin-stdlib</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>net.openhft</groupId>
-      <artifactId>chronicle-bytes</artifactId>
-      <version>2.19.42</version>
-      <exclusions>
-        <exclusion>
-          <groupId>net.openhft</groupId>
-          <artifactId>chronicle-core</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.jetbrains</groupId>
-          <artifactId>annotations</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
+    <!--    <dependency>-->
+    <!--      <groupId>com.github.jnr</groupId>-->
+    <!--      <artifactId>jnr-posix</artifactId>-->
+    <!--      <version>3.1.5</version>-->
+    <!--      &lt;!&ndash; This uses same jnr-ffi ver as lmdbjava &ndash;&gt;-->
+    <!--      <exclusions>-->
+    <!--        <exclusion>-->
+    <!--          <groupId>com.github.jnr</groupId>-->
+    <!--          <artifactId>jnr-constants</artifactId>-->
+    <!--        </exclusion>-->
+    <!--        &lt;!&ndash; THis conflicts with jnr-ffi in lmdbjava &ndash;&gt;-->
+    <!--        &lt;!&ndash;        <exclusion>&ndash;&gt;-->
+    <!--        &lt;!&ndash;          <groupId>com.github.jnr</groupId>&ndash;&gt;-->
+    <!--        &lt;!&ndash;          <artifactId>jnr-ffi</artifactId>&ndash;&gt;-->
+    <!--        &lt;!&ndash;        </exclusion>&ndash;&gt;-->
+    <!--      </exclusions>-->
+    <!--    </dependency>-->
+    <!--    <dependency>-->
+    <!--      <groupId>com.h2database</groupId>-->
+    <!--      <artifactId>h2-mvstore</artifactId>-->
+    <!--      <version>1.4.200</version>-->
+    <!--    </dependency>-->
+    <!--    <dependency>-->
+    <!--      <groupId>io.github.microutils</groupId>-->
+    <!--      <artifactId>kotlin-logging</artifactId>-->
+    <!--      <version>1.7.10</version>-->
+    <!--      <exclusions>-->
+    <!--        <exclusion>-->
+    <!--          <groupId>org.slf4j</groupId>-->
+    <!--          <artifactId>slf4j-api</artifactId>-->
+    <!--        </exclusion>-->
+    <!--        <exclusion>-->
+    <!--          <groupId>org.jetbrains.kotlin</groupId>-->
+    <!--          <artifactId>kotlin-stdlib</artifactId>-->
+    <!--        </exclusion>-->
+    <!--      </exclusions>-->
+    <!--    </dependency>-->
+    <!--    <dependency>-->
+    <!--      <groupId>net.openhft</groupId>-->
+    <!--      <artifactId>chronicle-bytes</artifactId>-->
+    <!--      <version>2.19.42</version>-->
+    <!--      <exclusions>-->
+    <!--        <exclusion>-->
+    <!--          <groupId>net.openhft</groupId>-->
+    <!--          <artifactId>chronicle-core</artifactId>-->
+    <!--        </exclusion>-->
+    <!--        <exclusion>-->
+    <!--          <groupId>org.jetbrains</groupId>-->
+    <!--          <artifactId>annotations</artifactId>-->
+    <!--        </exclusion>-->
+    <!--      </exclusions>-->
+    <!--    </dependency>-->
     <!-- need explicit chronicle-* dependencies to resolve dependency convergence errors caused by chronicle-map importing multiple versions of transient dependencies -->
-    <dependency>
-      <groupId>net.openhft</groupId>
-      <artifactId>chronicle-core</artifactId>
-      <version>2.19.46</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.jetbrains</groupId>
-          <artifactId>annotations</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-api</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>net.openhft</groupId>
-      <artifactId>chronicle-map</artifactId>
-      <version>3.19.40</version>
-      <exclusions>
-        <exclusion>
-          <groupId>net.openhft</groupId>
-          <artifactId>chronicle-core</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>net.openhft</groupId>
-          <artifactId>chronicle-bytes</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>net.openhft</groupId>
-          <artifactId>chronicle-threads</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-api</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.sun.java</groupId>
-          <artifactId>tools</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>xmlpull</groupId>
-          <artifactId>xmlpull</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.intellij</groupId>
-          <artifactId>annotations</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.jetbrains</groupId>
-          <artifactId>annotations</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>net.openhft</groupId>
-      <artifactId>chronicle-threads</artifactId>
-      <version>2.19.43</version>
-      <exclusions>
-        <exclusion>
-          <groupId>net.openhft</groupId>
-          <artifactId>chronicle-core</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.jetbrains</groupId>
-          <artifactId>annotations</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-api</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>net.java.dev.jna</groupId>
-          <artifactId>jna</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>net.java.dev.jna</groupId>
-          <artifactId>jna-platform</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
+    <!--    <dependency>-->
+    <!--      <groupId>net.openhft</groupId>-->
+    <!--      <artifactId>chronicle-core</artifactId>-->
+    <!--      <version>2.19.46</version>-->
+    <!--      <exclusions>-->
+    <!--        <exclusion>-->
+    <!--          <groupId>org.jetbrains</groupId>-->
+    <!--          <artifactId>annotations</artifactId>-->
+    <!--        </exclusion>-->
+    <!--        <exclusion>-->
+    <!--          <groupId>org.slf4j</groupId>-->
+    <!--          <artifactId>slf4j-api</artifactId>-->
+    <!--        </exclusion>-->
+    <!--      </exclusions>-->
+    <!--    </dependency>-->
+    <!--    <dependency>-->
+    <!--      <groupId>net.openhft</groupId>-->
+    <!--      <artifactId>chronicle-map</artifactId>-->
+    <!--      <version>3.19.40</version>-->
+    <!--      <exclusions>-->
+    <!--        <exclusion>-->
+    <!--          <groupId>net.openhft</groupId>-->
+    <!--          <artifactId>chronicle-core</artifactId>-->
+    <!--        </exclusion>-->
+    <!--        <exclusion>-->
+    <!--          <groupId>net.openhft</groupId>-->
+    <!--          <artifactId>chronicle-bytes</artifactId>-->
+    <!--        </exclusion>-->
+    <!--        <exclusion>-->
+    <!--          <groupId>net.openhft</groupId>-->
+    <!--          <artifactId>chronicle-threads</artifactId>-->
+    <!--        </exclusion>-->
+    <!--        <exclusion>-->
+    <!--          <groupId>org.slf4j</groupId>-->
+    <!--          <artifactId>slf4j-api</artifactId>-->
+    <!--        </exclusion>-->
+    <!--        <exclusion>-->
+    <!--          <groupId>com.sun.java</groupId>-->
+    <!--          <artifactId>tools</artifactId>-->
+    <!--        </exclusion>-->
+    <!--        <exclusion>-->
+    <!--          <groupId>xmlpull</groupId>-->
+    <!--          <artifactId>xmlpull</artifactId>-->
+    <!--        </exclusion>-->
+    <!--        <exclusion>-->
+    <!--          <groupId>com.intellij</groupId>-->
+    <!--          <artifactId>annotations</artifactId>-->
+    <!--        </exclusion>-->
+    <!--        <exclusion>-->
+    <!--          <groupId>org.jetbrains</groupId>-->
+    <!--          <artifactId>annotations</artifactId>-->
+    <!--        </exclusion>-->
+    <!--      </exclusions>-->
+    <!--    </dependency>-->
+    <!--    <dependency>-->
+    <!--      <groupId>net.openhft</groupId>-->
+    <!--      <artifactId>chronicle-threads</artifactId>-->
+    <!--      <version>2.19.43</version>-->
+    <!--      <exclusions>-->
+    <!--        <exclusion>-->
+    <!--          <groupId>net.openhft</groupId>-->
+    <!--          <artifactId>chronicle-core</artifactId>-->
+    <!--        </exclusion>-->
+    <!--        <exclusion>-->
+    <!--          <groupId>org.jetbrains</groupId>-->
+    <!--          <artifactId>annotations</artifactId>-->
+    <!--        </exclusion>-->
+    <!--        <exclusion>-->
+    <!--          <groupId>org.slf4j</groupId>-->
+    <!--          <artifactId>slf4j-api</artifactId>-->
+    <!--        </exclusion>-->
+    <!--        <exclusion>-->
+    <!--          <groupId>net.java.dev.jna</groupId>-->
+    <!--          <artifactId>jna</artifactId>-->
+    <!--        </exclusion>-->
+    <!--        <exclusion>-->
+    <!--          <groupId>net.java.dev.jna</groupId>-->
+    <!--          <artifactId>jna-platform</artifactId>-->
+    <!--        </exclusion>-->
+    <!--      </exclusions>-->
+    <!--    </dependency>-->
     <dependency>
       <groupId>net.openhft</groupId>
       <artifactId>zero-allocation-hashing</artifactId>
@@ -164,119 +170,119 @@
       <artifactId>commons-math3</artifactId>
       <version>3.6.1</version>
     </dependency>
-    <dependency>
-      <groupId>org.deephacks.lmdbjni</groupId>
-      <artifactId>lmdbjni</artifactId>
-      <version>0.4.7</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.fusesource.hawtjni</groupId>
-          <artifactId>hawtjni-runtime</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.deephacks.lmdbjni</groupId>
-      <artifactId>lmdbjni-linux64</artifactId>
-      <version>0.4.7</version>
-    </dependency>
-    <dependency>
-      <groupId>org.fusesource.leveldbjni</groupId>
-      <artifactId>leveldbjni</artifactId>
-      <version>1.8</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.fusesource.hawtjni</groupId>
-          <artifactId>hawtjni-runtime</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.iq80.leveldb</groupId>
-          <artifactId>leveldb-api</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.fusesource.leveldbjni</groupId>
-      <artifactId>leveldbjni-linux64</artifactId>
-      <version>1.8</version>
-    </dependency>
-    <dependency>
-      <groupId>org.iq80.leveldb</groupId>
-      <artifactId>leveldb-api</artifactId>
-      <version>0.7</version>
-    </dependency>
-    <dependency>
-      <groupId>org.jetbrains.xodus</groupId>
-      <artifactId>xodus-environment</artifactId>
-      <version>1.3.232</version>
-      <exclusions>
-        <exclusion>
-          <groupId>io.github.microutils</groupId>
-          <artifactId>kotlin-logging</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.jetbrains.kotlin</groupId>
-          <artifactId>kotlin-stdlib-common</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.jetbrains.xodus</groupId>
-      <artifactId>xodus-openAPI</artifactId>
-      <version>1.3.232</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.jetbrains</groupId>
-          <artifactId>annotations</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-api</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>io.github.microutils</groupId>
-          <artifactId>kotlin-logging</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
+    <!--    <dependency>-->
+    <!--      <groupId>org.deephacks.lmdbjni</groupId>-->
+    <!--      <artifactId>lmdbjni</artifactId>-->
+    <!--      <version>0.4.7</version>-->
+    <!--      <exclusions>-->
+    <!--        <exclusion>-->
+    <!--          <groupId>org.fusesource.hawtjni</groupId>-->
+    <!--          <artifactId>hawtjni-runtime</artifactId>-->
+    <!--        </exclusion>-->
+    <!--      </exclusions>-->
+    <!--    </dependency>-->
+    <!--    <dependency>-->
+    <!--      <groupId>org.deephacks.lmdbjni</groupId>-->
+    <!--      <artifactId>lmdbjni-linux64</artifactId>-->
+    <!--      <version>0.4.7</version>-->
+    <!--    </dependency>-->
+    <!--    <dependency>-->
+    <!--      <groupId>org.fusesource.leveldbjni</groupId>-->
+    <!--      <artifactId>leveldbjni</artifactId>-->
+    <!--      <version>1.8</version>-->
+    <!--      <exclusions>-->
+    <!--        <exclusion>-->
+    <!--          <groupId>org.fusesource.hawtjni</groupId>-->
+    <!--          <artifactId>hawtjni-runtime</artifactId>-->
+    <!--        </exclusion>-->
+    <!--        <exclusion>-->
+    <!--          <groupId>org.iq80.leveldb</groupId>-->
+    <!--          <artifactId>leveldb-api</artifactId>-->
+    <!--        </exclusion>-->
+    <!--      </exclusions>-->
+    <!--    </dependency>-->
+    <!--    <dependency>-->
+    <!--      <groupId>org.fusesource.leveldbjni</groupId>-->
+    <!--      <artifactId>leveldbjni-linux64</artifactId>-->
+    <!--      <version>1.8</version>-->
+    <!--    </dependency>-->
+    <!--    <dependency>-->
+    <!--      <groupId>org.iq80.leveldb</groupId>-->
+    <!--      <artifactId>leveldb-api</artifactId>-->
+    <!--      <version>0.7</version>-->
+    <!--    </dependency>-->
+    <!--    <dependency>-->
+    <!--      <groupId>org.jetbrains.xodus</groupId>-->
+    <!--      <artifactId>xodus-environment</artifactId>-->
+    <!--      <version>1.3.232</version>-->
+    <!--      <exclusions>-->
+    <!--        <exclusion>-->
+    <!--          <groupId>io.github.microutils</groupId>-->
+    <!--          <artifactId>kotlin-logging</artifactId>-->
+    <!--        </exclusion>-->
+    <!--        <exclusion>-->
+    <!--          <groupId>org.jetbrains.kotlin</groupId>-->
+    <!--          <artifactId>kotlin-stdlib-common</artifactId>-->
+    <!--        </exclusion>-->
+    <!--      </exclusions>-->
+    <!--    </dependency>-->
+    <!--    <dependency>-->
+    <!--      <groupId>org.jetbrains.xodus</groupId>-->
+    <!--      <artifactId>xodus-openAPI</artifactId>-->
+    <!--      <version>1.3.232</version>-->
+    <!--      <exclusions>-->
+    <!--        <exclusion>-->
+    <!--          <groupId>org.jetbrains</groupId>-->
+    <!--          <artifactId>annotations</artifactId>-->
+    <!--        </exclusion>-->
+    <!--        <exclusion>-->
+    <!--          <groupId>org.slf4j</groupId>-->
+    <!--          <artifactId>slf4j-api</artifactId>-->
+    <!--        </exclusion>-->
+    <!--        <exclusion>-->
+    <!--          <groupId>io.github.microutils</groupId>-->
+    <!--          <artifactId>kotlin-logging</artifactId>-->
+    <!--        </exclusion>-->
+    <!--      </exclusions>-->
+    <!--    </dependency>-->
     <dependency>
       <groupId>org.lmdbjava</groupId>
       <artifactId>lmdbjava</artifactId>
-      <version>0.8.1</version>
+      <version>0.8.2</version>
     </dependency>
-    <dependency>
-      <groupId>org.lwjgl</groupId>
-      <artifactId>lwjgl</artifactId>
-      <version>3.2.3</version>
-    </dependency>
-    <dependency>
-      <groupId>org.lwjgl</groupId>
-      <artifactId>lwjgl</artifactId>
-      <version>3.2.3</version>
-      <classifier>natives-linux</classifier>
-    </dependency>
-    <dependency>
-      <groupId>org.lwjgl</groupId>
-      <artifactId>lwjgl-lmdb</artifactId>
-      <version>3.2.3</version>
-    </dependency>
-    <dependency>
-      <groupId>org.lwjgl</groupId>
-      <artifactId>lwjgl-lmdb</artifactId>
-      <version>3.2.3</version>
-      <classifier>natives-linux</classifier>
-    </dependency>
-    <dependency>
-      <groupId>org.mapdb</groupId>
-      <artifactId>mapdb</artifactId>
-      <version>3.0.8</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.jetbrains.kotlin</groupId>
-          <artifactId>kotlin-stdlib</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
+    <!--    <dependency>-->
+    <!--      <groupId>org.lwjgl</groupId>-->
+    <!--      <artifactId>lwjgl</artifactId>-->
+    <!--      <version>3.2.3</version>-->
+    <!--    </dependency>-->
+    <!--    <dependency>-->
+    <!--      <groupId>org.lwjgl</groupId>-->
+    <!--      <artifactId>lwjgl</artifactId>-->
+    <!--      <version>3.2.3</version>-->
+    <!--      <classifier>natives-linux</classifier>-->
+    <!--    </dependency>-->
+    <!--    <dependency>-->
+    <!--      <groupId>org.lwjgl</groupId>-->
+    <!--      <artifactId>lwjgl-lmdb</artifactId>-->
+    <!--      <version>3.2.3</version>-->
+    <!--    </dependency>-->
+    <!--    <dependency>-->
+    <!--      <groupId>org.lwjgl</groupId>-->
+    <!--      <artifactId>lwjgl-lmdb</artifactId>-->
+    <!--      <version>3.2.3</version>-->
+    <!--      <classifier>natives-linux</classifier>-->
+    <!--    </dependency>-->
+    <!--    <dependency>-->
+    <!--      <groupId>org.mapdb</groupId>-->
+    <!--      <artifactId>mapdb</artifactId>-->
+    <!--      <version>3.0.8</version>-->
+    <!--      <exclusions>-->
+    <!--        <exclusion>-->
+    <!--          <groupId>org.jetbrains.kotlin</groupId>-->
+    <!--          <artifactId>kotlin-stdlib</artifactId>-->
+    <!--        </exclusion>-->
+    <!--      </exclusions>-->
+    <!--    </dependency>-->
     <dependency>
       <groupId>org.openjdk.jmh</groupId>
       <artifactId>jmh-core</artifactId>
@@ -294,11 +300,11 @@
       <version>${jmh.version}</version>
       <scope>provided</scope>
     </dependency>
-    <dependency>
-      <groupId>org.rocksdb</groupId>
-      <artifactId>rocksdbjni</artifactId>
-      <version>6.8.1</version>
-    </dependency>
+    <!--    <dependency>-->
+    <!--      <groupId>org.rocksdb</groupId>-->
+    <!--      <artifactId>rocksdbjni</artifactId>-->
+    <!--      <version>6.8.1</version>-->
+    <!--    </dependency>-->
     <!-- Koyoto Cabinet not benchmarked as required .so not in JAR or AUR -->
     <!-- Berkley DB Java Edition not benchmarked due to Affero license -->
   </dependencies>
@@ -322,18 +328,26 @@
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>21</source>
+          <target>21</target>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
         <configuration>
           <usedDependencies>
             <usedDependency>org.openjdk.jmh:jmh-generator-annprocess</usedDependency>
-            <usedDependency>org.deephacks.lmdbjni:lmdbjni-linux64</usedDependency>
-            <usedDependency>org.fusesource.leveldbjni:leveldbjni-linux64</usedDependency>
-            <usedDependency>org.lwjgl:lwjgl</usedDependency>
-            <usedDependency>org.lwjgl:lwjgl-lmdb</usedDependency>
-            <usedDependency>io.github.microutils:kotlin-logging</usedDependency>
-            <usedDependency>net.openhft:chronicle-core</usedDependency>
-            <usedDependency>net.openhft:chronicle-bytes</usedDependency>
-            <usedDependency>net.openhft:chronicle-threads</usedDependency>
+            <!--            <usedDependency>org.deephacks.lmdbjni:lmdbjni-linux64</usedDependency>-->
+            <!--            <usedDependency>org.fusesource.leveldbjni:leveldbjni-linux64</usedDependency>-->
+            <!--            <usedDependency>org.lwjgl:lwjgl</usedDependency>-->
+            <!--            <usedDependency>org.lwjgl:lwjgl-lmdb</usedDependency>-->
+            <!--            <usedDependency>io.github.microutils:kotlin-logging</usedDependency>-->
+            <!--            <usedDependency>net.openhft:chronicle-core</usedDependency>-->
+            <!--            <usedDependency>net.openhft:chronicle-bytes</usedDependency>-->
+            <!--            <usedDependency>net.openhft:chronicle-threads</usedDependency>-->
           </usedDependencies>
         </configuration>
       </plugin>

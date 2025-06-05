@@ -2,7 +2,7 @@
  * #%L
  * LmdbJava Benchmarks
  * %%
- * Copyright (C) 2016 - 2022 The LmdbJava Open Source Project
+ * Copyright (C) 2016 - 2025 The LmdbJava Open Source Project
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,25 @@
  */
 
 package org.lmdbjava.bench;
+
+import org.lmdbjava.Cursor;
+import org.lmdbjava.PutFlags;
+import org.lmdbjava.Txn;
+import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.Fork;
+import org.openjdk.jmh.annotations.Measurement;
+import org.openjdk.jmh.annotations.OutputTimeUnit;
+import org.openjdk.jmh.annotations.Param;
+import org.openjdk.jmh.annotations.Setup;
+import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.TearDown;
+import org.openjdk.jmh.annotations.Warmup;
+import org.openjdk.jmh.infra.BenchmarkParams;
+import org.openjdk.jmh.infra.Blackhole;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import static java.nio.ByteBuffer.allocateDirect;
 import static java.nio.ByteOrder.LITTLE_ENDIAN;
@@ -38,29 +57,12 @@ import static org.openjdk.jmh.annotations.Level.Trial;
 import static org.openjdk.jmh.annotations.Mode.SampleTime;
 import static org.openjdk.jmh.annotations.Scope.Benchmark;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
-import org.lmdbjava.Cursor;
-import org.lmdbjava.PutFlags;
-import org.lmdbjava.Txn;
-import org.openjdk.jmh.annotations.Benchmark;
-import org.openjdk.jmh.annotations.BenchmarkMode;
-import org.openjdk.jmh.annotations.Fork;
-import org.openjdk.jmh.annotations.Measurement;
-import org.openjdk.jmh.annotations.OutputTimeUnit;
-import org.openjdk.jmh.annotations.Param;
-import org.openjdk.jmh.annotations.Setup;
-import org.openjdk.jmh.annotations.State;
-import org.openjdk.jmh.annotations.TearDown;
-import org.openjdk.jmh.annotations.Warmup;
-import org.openjdk.jmh.infra.BenchmarkParams;
-import org.openjdk.jmh.infra.Blackhole;
-
 @OutputTimeUnit(MILLISECONDS)
 @Fork(1)
 @Warmup(iterations = 3)
+//@Warmup(iterations = 1)
 @Measurement(iterations = 3)
+//@Measurement(iterations = 1)
 @BenchmarkMode(SampleTime)
 @SuppressWarnings({"checkstyle:javadoctype", "checkstyle:designforextension"})
 public class LmdbJavaByteBuffer {
@@ -123,6 +125,10 @@ public class LmdbJavaByteBuffer {
     w.write();
   }
 
+
+  // --------------------------------------------------------------------------------
+
+
   @State(Benchmark)
   @SuppressWarnings("checkstyle:visibilitymodifier")
   public static class LmdbJava extends CommonLmdbJava<ByteBuffer> {
@@ -174,6 +180,10 @@ public class LmdbJavaByteBuffer {
 
   }
 
+
+  // --------------------------------------------------------------------------------
+
+
   @State(Benchmark)
   @SuppressWarnings("checkstyle:visibilitymodifier")
   public static class Reader extends LmdbJava {
@@ -206,6 +216,10 @@ public class LmdbJavaByteBuffer {
       super.teardown();
     }
   }
+
+
+  // --------------------------------------------------------------------------------
+
 
   @State(Benchmark)
   @SuppressWarnings("checkstyle:visibilitymodifier")
