@@ -59,11 +59,10 @@ import org.rocksdb.WriteOptions;
 @Warmup(iterations = 3)
 @Measurement(iterations = 3)
 @BenchmarkMode(SampleTime)
-@SuppressWarnings({"checkstyle:javadoctype", "checkstyle:designforextension"})
+
 public class RocksDb {
 
   @Benchmark
-  @SuppressWarnings("PMD.CloseResource")
   public void readCrc(final Reader r, final Blackhole bh) {
     r.crc.reset();
     final RocksIterator iterator = r.db.newIterator();
@@ -90,7 +89,6 @@ public class RocksDb {
   }
 
   @Benchmark
-  @SuppressWarnings("PMD.CloseResource")
   public void readRev(final Reader r, final Blackhole bh) {
     final RocksIterator iterator = r.db.newIterator();
     iterator.seekToLast();
@@ -101,7 +99,6 @@ public class RocksDb {
   }
 
   @Benchmark
-  @SuppressWarnings("PMD.CloseResource")
   public void readSeq(final Reader r, final Blackhole bh) {
     final RocksIterator iterator = r.db.newIterator();
     iterator.seekToFirst();
@@ -112,7 +109,6 @@ public class RocksDb {
   }
 
   @Benchmark
-  @SuppressWarnings("PMD.CloseResource")
   public void readXxh64(final Reader r, final Blackhole bh) {
     long result = 0;
     final RocksIterator iterator = r.db.newIterator();
@@ -131,7 +127,7 @@ public class RocksDb {
   }
 
   @State(value = Benchmark)
-  @SuppressWarnings("checkstyle:visibilitymodifier")
+  
   public static class CommonRocksDb extends Common {
 
     RocksDB db;
@@ -147,7 +143,6 @@ public class RocksDb {
     MutableDirectBuffer wvb;
 
     @Override
-    @SuppressWarnings("PMD.CloseResource")
     public void setup(final BenchmarkParams b) throws IOException {
       super.setup(b);
       wkb = new UnsafeBuffer(new byte[keySize]);
@@ -172,7 +167,7 @@ public class RocksDb {
       super.teardown();
     }
 
-    @SuppressWarnings({"PMD.CyclomaticComplexity", "PMD.CloseResource"})
+    
     void write(final int batchSize) throws IOException {
       final int rndByteMax = RND_MB.length - valSize;
       int rndByteOffset = 0;
@@ -236,7 +231,7 @@ public class RocksDb {
   }
 
   @State(Benchmark)
-  @SuppressWarnings("checkstyle:visibilitymodifier")
+  
   public static class Writer extends CommonRocksDb {
 
     @Param("1000000")

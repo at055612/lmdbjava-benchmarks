@@ -54,7 +54,7 @@ import org.openjdk.jmh.infra.Blackhole;
 @Warmup(iterations = 3)
 @Measurement(iterations = 3)
 @BenchmarkMode(SampleTime)
-@SuppressWarnings({"checkstyle:javadoctype", "checkstyle:designforextension"})
+
 public class MvStore {
 
   @Benchmark
@@ -118,7 +118,7 @@ public class MvStore {
   }
 
   @State(value = Benchmark)
-  @SuppressWarnings("checkstyle:visibilitymodifier")
+  
   public static class CommonMvStore extends Common {
 
     MVMap<byte[], byte[]> map;

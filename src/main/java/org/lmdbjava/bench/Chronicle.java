@@ -51,7 +51,7 @@ import org.openjdk.jmh.infra.Blackhole;
 @Warmup(iterations = 3)
 @Measurement(iterations = 3)
 @BenchmarkMode(SampleTime)
-@SuppressWarnings({"checkstyle:javadoctype", "checkstyle:designforextension"})
+
 public class Chronicle {
 
   // Chroncile Map does not provide ordered keys, so no CRC/XXH64/rev/prev test
@@ -73,7 +73,7 @@ public class Chronicle {
   }
 
   @State(value = Benchmark)
-  @SuppressWarnings("checkstyle:visibilitymodifier")
+  
   public static class CommonChroncileMap extends Common {
 
     ChronicleMap<byte[], byte[]> map;
@@ -152,7 +152,6 @@ public class Chronicle {
     }
   }
 
-  @SuppressWarnings("checkstyle:javadoctype")
   @State(Benchmark)
   public static class Writer extends CommonChroncileMap {
 

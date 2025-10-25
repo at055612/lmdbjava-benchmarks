@@ -47,8 +47,6 @@ import org.openjdk.jmh.infra.BenchmarkParams;
  * to compliance requirements with JMH {@link Param} and {@link State}.
  */
 @State(Benchmark)
-@SuppressWarnings({"checkstyle:designforextension",
-                   "checkstyle:visibilitymodifier"})
 public class Common {
 
   static final byte[] RND_MB = new byte[1_048_576];
@@ -160,7 +158,6 @@ public class Common {
     rmdir(TMP_BENCH);
   }
 
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   protected void reportSpaceUsed(final File dir, final String desc) {
     final File[] files = dir.listFiles();
     if (files == null) {
@@ -190,7 +187,7 @@ public class Common {
     return f;
   }
 
-  @SuppressWarnings("checkstyle:ReturnCount")
+  
   private void rmdir(final File file) {
     if (!file.exists()) {
       return;

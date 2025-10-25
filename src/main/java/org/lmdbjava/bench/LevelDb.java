@@ -59,7 +59,7 @@ import org.openjdk.jmh.infra.Blackhole;
 @Warmup(iterations = 3)
 @Measurement(iterations = 3)
 @BenchmarkMode(SampleTime)
-@SuppressWarnings({"checkstyle:javadoctype", "checkstyle:designforextension"})
+
 public class LevelDb {
 
   @Benchmark
@@ -126,7 +126,7 @@ public class LevelDb {
   }
 
   @State(value = Benchmark)
-  @SuppressWarnings("checkstyle:visibilitymodifier")
+  
   public static class CommonLevelDb extends Common {
 
     DB db;
@@ -161,7 +161,6 @@ public class LevelDb {
       super.teardown();
     }
 
-    @SuppressWarnings("PMD.CloseResource")
     void write(final int batchSize) throws IOException {
       final int rndByteMax = RND_MB.length - valSize;
       int rndByteOffset = 0;
@@ -212,7 +211,7 @@ public class LevelDb {
   }
 
   @State(Benchmark)
-  @SuppressWarnings("checkstyle:visibilitymodifier")
+  
   public static class Writer extends CommonLevelDb {
 
     @Param("1000000")

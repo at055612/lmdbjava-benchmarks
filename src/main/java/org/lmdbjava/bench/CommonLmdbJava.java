@@ -49,8 +49,6 @@ import org.openjdk.jmh.infra.BenchmarkParams;
  * @param <T> buffer type
  */
 @State(Benchmark)
-@SuppressWarnings({"checkstyle:javadoctype", "checkstyle:designforextension",
-                   "checkstyle:visibilitymodifier"})
 public class CommonLmdbJava<T> extends Common {
 
   static final int POSIX_MODE = 664;

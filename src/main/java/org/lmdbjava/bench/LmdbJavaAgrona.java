@@ -66,7 +66,7 @@ import org.openjdk.jmh.infra.Blackhole;
 @Warmup(iterations = 3)
 @Measurement(iterations = 3)
 @BenchmarkMode(SampleTime)
-@SuppressWarnings({"checkstyle:javadoctype", "checkstyle:designforextension"})
+
 public class LmdbJavaAgrona {
 
   @Benchmark
@@ -128,7 +128,7 @@ public class LmdbJavaAgrona {
   }
 
   @State(Benchmark)
-  @SuppressWarnings("checkstyle:visibilitymodifier")
+  
   public static class LmdbJava extends CommonLmdbJava<DirectBuffer> {
 
     /**
@@ -157,7 +157,6 @@ public class LmdbJavaAgrona {
       rwVal = new UnsafeBuffer(allocateDirect(valSize));
     }
 
-    @SuppressWarnings("PMD.NullAssignment")
     void write() {
       try (Txn<DirectBuffer> tx = env.txnWrite()) {
         try (Cursor<DirectBuffer> c = db.openCursor(tx);) {
@@ -189,7 +188,7 @@ public class LmdbJavaAgrona {
   }
 
   @State(Benchmark)
-  @SuppressWarnings("checkstyle:visibilitymodifier")
+  
   public static class Reader extends LmdbJava {
 
     Cursor<DirectBuffer> c;
@@ -220,7 +219,7 @@ public class LmdbJavaAgrona {
   }
 
   @State(Benchmark)
-  @SuppressWarnings("checkstyle:visibilitymodifier")
+  
   public static class Writer extends LmdbJava {
 
     /**

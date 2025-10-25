@@ -63,7 +63,7 @@ import org.openjdk.jmh.infra.Blackhole;
 @Warmup(iterations = 3)
 @Measurement(iterations = 3)
 @BenchmarkMode(SampleTime)
-@SuppressWarnings({"checkstyle:javadoctype", "checkstyle:designforextension"})
+
 public class LmdbJni {
 
   @Benchmark
@@ -126,7 +126,7 @@ public class LmdbJni {
   }
 
   @State(value = Benchmark)
-  @SuppressWarnings("checkstyle:visibilitymodifier")
+  
   public static class CommonLmdbJni extends Common {
 
     Database db;
@@ -227,7 +227,7 @@ public class LmdbJni {
   }
 
   @State(Benchmark)
-  @SuppressWarnings("checkstyle:visibilitymodifier")
+  
   public static class Reader extends CommonLmdbJni {
 
     BufferCursor c;
@@ -252,7 +252,7 @@ public class LmdbJni {
   }
 
   @State(Benchmark)
-  @SuppressWarnings("checkstyle:visibilitymodifier")
+  
   public static class Writer extends CommonLmdbJni {
 
     /**

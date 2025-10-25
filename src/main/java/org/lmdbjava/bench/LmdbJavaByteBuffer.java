@@ -62,7 +62,7 @@ import org.openjdk.jmh.infra.Blackhole;
 @Warmup(iterations = 3)
 @Measurement(iterations = 3)
 @BenchmarkMode(SampleTime)
-@SuppressWarnings({"checkstyle:javadoctype", "checkstyle:designforextension"})
+
 public class LmdbJavaByteBuffer {
 
   @Benchmark
@@ -124,7 +124,7 @@ public class LmdbJavaByteBuffer {
   }
 
   @State(Benchmark)
-  @SuppressWarnings("checkstyle:visibilitymodifier")
+  
   public static class LmdbJava extends CommonLmdbJava<ByteBuffer> {
 
     ByteBuffer rwKey;
@@ -138,7 +138,6 @@ public class LmdbJavaByteBuffer {
       rwVal = allocateDirect(valSize);
     }
 
-    @SuppressWarnings("PMD.NullAssignment")
     void write() {
       try (Txn<ByteBuffer> tx = env.txnWrite();) {
         try (Cursor<ByteBuffer> c = db.openCursor(tx);) {
@@ -175,7 +174,7 @@ public class LmdbJavaByteBuffer {
   }
 
   @State(Benchmark)
-  @SuppressWarnings("checkstyle:visibilitymodifier")
+  
   public static class Reader extends LmdbJava {
 
     Cursor<ByteBuffer> c;
@@ -208,7 +207,7 @@ public class LmdbJavaByteBuffer {
   }
 
   @State(Benchmark)
-  @SuppressWarnings("checkstyle:visibilitymodifier")
+  
   public static class Writer extends LmdbJava {
 
     /**

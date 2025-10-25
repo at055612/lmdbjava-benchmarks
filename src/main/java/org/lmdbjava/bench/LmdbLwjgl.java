@@ -83,8 +83,6 @@ import org.openjdk.jmh.infra.Blackhole;
 @Warmup(iterations = 3)
 @Measurement(iterations = 3)
 @BenchmarkMode(SampleTime)
-@SuppressWarnings({"checkstyle:javadoctype", "checkstyle:designforextension",
-                   "PMD.CloseResource"})
 public class LmdbLwjgl {
 
   @Benchmark
@@ -178,7 +176,7 @@ public class LmdbLwjgl {
   }
 
   @State(Benchmark)
-  @SuppressWarnings("checkstyle:visibilitymodifier")
+  
   public static class CommonLmdbLwjgl extends Common {
 
     private static final int POSIX_MODE = 664;
@@ -192,7 +190,7 @@ public class LmdbLwjgl {
     @Param("true")
     boolean writeMap;
 
-    @SuppressWarnings("checkstyle:methodname")
+    
     static void E(final int rc) {
       if (rc != MDB_SUCCESS) {
         throw new IllegalStateException(mdb_strerror(rc));
@@ -309,7 +307,7 @@ public class LmdbLwjgl {
   }
 
   @State(Benchmark)
-  @SuppressWarnings("checkstyle:visibilitymodifier")
+  
   public static class Reader extends CommonLmdbLwjgl {
 
     long c;
@@ -342,7 +340,7 @@ public class LmdbLwjgl {
   }
 
   @State(Benchmark)
-  @SuppressWarnings("checkstyle:visibilitymodifier")
+  
   public static class Writer extends CommonLmdbLwjgl {
 
     /**
