@@ -26,7 +26,7 @@ import static jetbrains.exodus.bindings.IntegerBinding.intToEntry;
 import static jetbrains.exodus.bindings.StringBinding.stringToEntry;
 import static jetbrains.exodus.env.Environments.newInstance;
 import static jetbrains.exodus.env.StoreConfig.WITHOUT_DUPLICATES_WITH_PREFIXING;
-import static net.openhft.hashing.LongHashFunction.xx_r39;
+
 import static org.lmdbjava.bench.Common.RND_MB;
 import static org.openjdk.jmh.annotations.Level.Invocation;
 import static org.openjdk.jmh.annotations.Level.Trial;
@@ -34,6 +34,9 @@ import static org.openjdk.jmh.annotations.Mode.SampleTime;
 import static org.openjdk.jmh.annotations.Scope.Benchmark;
 
 import java.io.IOException;
+
+import net.jpountz.xxhash.XXHash32;
+import net.jpountz.xxhash.XXHashFactory;
 
 import jetbrains.exodus.ArrayByteIterable;
 import jetbrains.exodus.ByteIterable;
@@ -115,9 +118,8 @@ public class Xodus {
     long result = 0;
     try (Cursor c = r.store.openCursor(r.tx)) {
       while (c.getNext()) {
-        result += xx_r39().hashBytes(c.getKey().getBytesUnsafe(), 0, r.keySize);
-        result += xx_r39().
-            hashBytes(c.getValue().getBytesUnsafe(), 0, r.valSize);
+        result += r.xxh.hash(c.getKey().getBytesUnsafe(), 0, r.keySize, 0);
+        result += r.xxh.hash(c.getValue().getBytesUnsafe(), 0, r.valSize, 0);
       }
     }
     bh.consume(result);
@@ -216,6 +218,7 @@ public class Xodus {
       super.setup(b);
       super.write();
       tx = env.beginReadonlyTransaction();
+      xxh = XXHashFactory.nativeInstance().hash32();
       // cannot share Cursor, as there's no Cursor.getFirst() to reset methods
     }
 

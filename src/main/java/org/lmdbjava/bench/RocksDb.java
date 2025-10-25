@@ -22,7 +22,7 @@ package org.lmdbjava.bench;
 
 import static java.nio.ByteOrder.LITTLE_ENDIAN;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static net.openhft.hashing.LongHashFunction.xx_r39;
+
 import static org.openjdk.jmh.annotations.Level.Invocation;
 import static org.openjdk.jmh.annotations.Level.Trial;
 import static org.openjdk.jmh.annotations.Mode.SampleTime;
@@ -32,6 +32,9 @@ import static org.rocksdb.RocksDB.loadLibrary;
 import static org.rocksdb.RocksDB.open;
 
 import java.io.IOException;
+
+import net.jpountz.xxhash.XXHash32;
+import net.jpountz.xxhash.XXHashFactory;
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
@@ -114,8 +117,8 @@ public class RocksDb {
     final RocksIterator iterator = r.db.newIterator();
     iterator.seekToFirst();
     while (iterator.isValid()) {
-      result += xx_r39().hashBytes(iterator.key());
-      result += xx_r39().hashBytes(iterator.value());
+      result += r.xxh.hash(iterator.key(), 0, iterator.key().length, 0);
+      result += r.xxh.hash(iterator.value(), 0, iterator.value().length, 0);
       iterator.next();
     }
     bh.consume(result);
@@ -214,13 +217,17 @@ public class RocksDb {
   }
 
   @State(Benchmark)
+  
   public static class Reader extends CommonRocksDb {
+
+    XXHash32 xxh;
 
     @Setup(Trial)
     @Override
     public void setup(final BenchmarkParams b) throws IOException {
       super.setup(b);
       super.write(num);
+      xxh = XXHashFactory.nativeInstance().hash32();
     }
 
     @TearDown(Trial)

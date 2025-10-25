@@ -24,7 +24,6 @@ import static java.nio.ByteBuffer.allocateDirect;
 import static java.nio.ByteOrder.LITTLE_ENDIAN;
 import static java.nio.charset.StandardCharsets.US_ASCII;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static net.openhft.hashing.LongHashFunction.xx_r39;
 import static org.lmdbjava.ByteBufferProxy.PROXY_OPTIMAL;
 import static org.lmdbjava.ByteBufferProxy.PROXY_SAFE;
 import static org.lmdbjava.GetOp.MDB_SET_KEY;
@@ -41,6 +40,8 @@ import static org.openjdk.jmh.annotations.Scope.Benchmark;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import net.jpountz.xxhash.XXHash32;
+import net.jpountz.xxhash.XXHashFactory;
 import org.lmdbjava.Cursor;
 import org.lmdbjava.PutFlags;
 import org.lmdbjava.Txn;
@@ -112,8 +113,14 @@ public class LmdbJavaByteBuffer {
     long result = 0;
     bh.consume(r.c.seek(MDB_FIRST));
     do {
-      result += xx_r39().hashBytes(r.txn.key());
-      result += xx_r39().hashBytes(r.txn.val());
+      final ByteBuffer key = r.txn.key();
+      final ByteBuffer val = r.txn.val();
+      final int keyLen = key.remaining();
+      final int valLen = val.remaining();
+      key.get(r.keyBytes, 0, keyLen);
+      val.get(r.valBytes, 0, valLen);
+      result += r.xxh.hash(r.keyBytes, 0, keyLen, 0);
+      result += r.xxh.hash(r.valBytes, 0, valLen, 0);
     } while (r.c.seek(MDB_NEXT));
     bh.consume(result);
   }
@@ -185,7 +192,10 @@ public class LmdbJavaByteBuffer {
     @Param("false")
     boolean forceSafe;
 
+    byte[] keyBytes;
     Txn<ByteBuffer> txn;
+    byte[] valBytes;
+    XXHash32 xxh;
 
     @Setup(Trial)
     @Override
@@ -193,8 +203,11 @@ public class LmdbJavaByteBuffer {
       bufferProxy = forceSafe ? PROXY_SAFE : PROXY_OPTIMAL;
       super.setup(b, false);
       super.write();
+      keyBytes = new byte[keySize];
+      valBytes = new byte[valSize];
       txn = env.txnRead();
       c = db.openCursor(txn);
+      xxh = XXHashFactory.nativeInstance().hash32();
     }
 
     @TearDown(Trial)

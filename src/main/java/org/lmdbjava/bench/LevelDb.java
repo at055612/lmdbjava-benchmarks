@@ -22,7 +22,7 @@ package org.lmdbjava.bench;
 
 import static java.nio.ByteOrder.LITTLE_ENDIAN;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static net.openhft.hashing.LongHashFunction.xx_r39;
+
 import static org.fusesource.leveldbjni.JniDBFactory.factory;
 import static org.fusesource.leveldbjni.JniDBFactory.popMemoryPool;
 import static org.fusesource.leveldbjni.JniDBFactory.pushMemoryPool;
@@ -33,6 +33,9 @@ import static org.openjdk.jmh.annotations.Mode.SampleTime;
 import static org.openjdk.jmh.annotations.Scope.Benchmark;
 
 import java.io.IOException;
+
+import net.jpountz.xxhash.XXHash32;
+import net.jpountz.xxhash.XXHashFactory;
 import java.util.Map.Entry;
 
 import org.agrona.MutableDirectBuffer;
@@ -113,8 +116,8 @@ public class LevelDb {
     try (DBIterator iterator = r.db.iterator()) {
       for (iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
         final Entry<byte[], byte[]> peeked = iterator.peekNext();
-        result += xx_r39().hashBytes(peeked.getKey());
-        result += xx_r39().hashBytes(peeked.getValue());
+        result += r.xxh.hash(peeked.getKey(), 0, peeked.getKey().length, 0);
+        result += r.xxh.hash(peeked.getValue(), 0, peeked.getValue().length, 0);
       }
     }
     bh.consume(result);
@@ -194,13 +197,17 @@ public class LevelDb {
   }
 
   @State(Benchmark)
+  
   public static class Reader extends CommonLevelDb {
+
+    XXHash32 xxh;
 
     @Setup(Trial)
     @Override
     public void setup(final BenchmarkParams b) throws IOException {
       super.setup(b);
       super.write(num);
+      xxh = XXHashFactory.nativeInstance().hash32();
     }
 
     @TearDown(Trial)

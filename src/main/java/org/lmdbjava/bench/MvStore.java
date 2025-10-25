@@ -23,7 +23,7 @@ package org.lmdbjava.bench;
 import static java.nio.ByteOrder.LITTLE_ENDIAN;
 import static java.util.Arrays.copyOf;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static net.openhft.hashing.LongHashFunction.xx_r39;
+
 import static org.openjdk.jmh.annotations.Level.Invocation;
 import static org.openjdk.jmh.annotations.Level.Trial;
 import static org.openjdk.jmh.annotations.Mode.SampleTime;
@@ -31,6 +31,9 @@ import static org.openjdk.jmh.annotations.Scope.Benchmark;
 
 import java.io.File;
 import java.io.IOException;
+
+import net.jpountz.xxhash.XXHash32;
+import net.jpountz.xxhash.XXHashFactory;
 import java.util.Iterator;
 
 import org.agrona.MutableDirectBuffer;
@@ -106,8 +109,8 @@ public class MvStore {
     while (iter.hasNext()) {
       final byte[] k = iter.next();
       final byte[] v = r.map.get(k);
-      result += xx_r39().hashBytes(k);
-      result += xx_r39().hashBytes(v);
+      result += r.xxh.hash(k, 0, k.length, 0);
+      result += r.xxh.hash(v, 0, v.length, 0);
     }
     bh.consume(result);
   }
@@ -180,13 +183,17 @@ public class MvStore {
   }
 
   @State(Benchmark)
+  
   public static class Reader extends CommonMvStore {
+
+    XXHash32 xxh;
 
     @Setup(Trial)
     @Override
     public void setup(final BenchmarkParams b) throws IOException {
       super.setup(b);
       super.write();
+      xxh = XXHashFactory.nativeInstance().hash32();
     }
 
     @TearDown(Trial)

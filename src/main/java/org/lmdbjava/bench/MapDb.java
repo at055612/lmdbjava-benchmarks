@@ -22,7 +22,7 @@ package org.lmdbjava.bench;
 
 import static java.nio.ByteOrder.LITTLE_ENDIAN;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static net.openhft.hashing.LongHashFunction.xx_r39;
+
 import static org.mapdb.DBMaker.fileDB;
 import static org.mapdb.Serializer.BYTE_ARRAY;
 import static org.openjdk.jmh.annotations.Level.Invocation;
@@ -32,6 +32,9 @@ import static org.openjdk.jmh.annotations.Scope.Benchmark;
 
 import java.io.File;
 import java.io.IOException;
+
+import net.jpountz.xxhash.XXHash32;
+import net.jpountz.xxhash.XXHashFactory;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
@@ -108,8 +111,8 @@ public class MapDb {
     final Iterator<Entry<byte[], byte[]>> iterator = r.map.entryIterator();
     while (iterator.hasNext()) {
       final Entry<byte[], byte[]> entry = iterator.next();
-      result += xx_r39().hashBytes(entry.getKey());
-      result += xx_r39().hashBytes(entry.getValue());
+      result += r.xxh.hash(entry.getKey(), 0, entry.getKey().length, 0);
+      result += r.xxh.hash(entry.getValue(), 0, entry.getValue().length, 0);
     }
     bh.consume(result);
   }
@@ -183,13 +186,17 @@ public class MapDb {
   }
 
   @State(Benchmark)
+  
   public static class Reader extends CommonMapDb {
+
+    XXHash32 xxh;
 
     @Setup(Trial)
     @Override
     public void setup(final BenchmarkParams b) throws IOException {
       super.setup(b);
       super.write();
+      xxh = XXHashFactory.nativeInstance().hash32();
     }
 
     @TearDown(Trial)

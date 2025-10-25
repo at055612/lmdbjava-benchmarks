@@ -21,7 +21,7 @@
 package org.lmdbjava.bench;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static net.openhft.hashing.LongHashFunction.xx_r39;
+
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.NULL;
 import static org.lwjgl.util.lmdb.LMDB.MDB_APPEND;
@@ -62,6 +62,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 
+import net.jpountz.xxhash.XXHash32;
+import net.jpountz.xxhash.XXHashFactory;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.util.lmdb.MDBVal;
@@ -161,8 +163,10 @@ public class LmdbLwjgl {
 
       int status = mdb_cursor_get(r.c, key, val, MDB_FIRST);
       while (status != MDB_NOTFOUND) {
-        result += xx_r39().hashBytes(key.mv_data());
-        result += xx_r39().hashBytes(val.mv_data());
+        key.mv_data().get(r.keyBytes);
+        val.mv_data().get(r.valBytes);
+        result += r.xxh.hash(r.keyBytes, 0, r.keySize, 0);
+        result += r.xxh.hash(r.valBytes, 0, r.valSize, 0);
 
         status = mdb_cursor_get(r.c, key, val, MDB_NEXT);
       }
@@ -311,13 +315,18 @@ public class LmdbLwjgl {
   public static class Reader extends CommonLmdbLwjgl {
 
     long c;
+    byte[] keyBytes;
     long txn;
+    byte[] valBytes;
+    XXHash32 xxh;
 
     @Setup(Trial)
     @Override
     public void setup(final BenchmarkParams b) throws IOException {
       super.setup(b, false);
       super.write();
+      keyBytes = new byte[keySize];
+      valBytes = new byte[valSize];
 
       try (MemoryStack stack = stackPush()) {
         final PointerBuffer pp = stack.mallocPointer(1);
@@ -328,6 +337,7 @@ public class LmdbLwjgl {
         E(mdb_cursor_open(txn, db, pp));
         c = pp.get(0);
       }
+      xxh = XXHashFactory.nativeInstance().hash32();
     }
 
     @TearDown(Trial)

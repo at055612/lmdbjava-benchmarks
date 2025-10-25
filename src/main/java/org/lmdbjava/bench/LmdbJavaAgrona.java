@@ -25,7 +25,6 @@ import static java.lang.System.setProperty;
 import static java.nio.ByteBuffer.allocateDirect;
 import static java.nio.ByteOrder.LITTLE_ENDIAN;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static net.openhft.hashing.LongHashFunction.xx_r39;
 import static org.agrona.concurrent.UnsafeBuffer.DISABLE_BOUNDS_CHECKS_PROP_NAME;
 import static org.lmdbjava.CopyFlags.MDB_CP_COMPACT;
 import static org.lmdbjava.DirectBufferProxy.PROXY_DB;
@@ -42,6 +41,8 @@ import static org.openjdk.jmh.annotations.Scope.Benchmark;
 
 import java.io.IOException;
 
+import net.jpountz.xxhash.XXHash32;
+import net.jpountz.xxhash.XXHashFactory;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
@@ -116,8 +117,10 @@ public class LmdbJavaAgrona {
     long result = 0;
     bh.consume(r.c.seek(MDB_FIRST));
     do {
-      result += xx_r39().hashMemory(r.txn.key().addressOffset(), r.keySize);
-      result += xx_r39().hashMemory(r.txn.val().addressOffset(), r.valSize);
+      r.txn.key().getBytes(0, r.keyBytes, 0, r.keySize);
+      r.txn.val().getBytes(0, r.valBytes, 0, r.valSize);
+      result += r.xxh.hash(r.keyBytes, 0, r.keySize, 0);
+      result += r.xxh.hash(r.valBytes, 0, r.valSize, 0);
     } while (r.c.seek(MDB_NEXT));
     bh.consume(result);
   }
@@ -193,6 +196,7 @@ public class LmdbJavaAgrona {
 
     Cursor<DirectBuffer> c;
     Txn<DirectBuffer> txn;
+    XXHash32 xxh;
 
     @Setup(Trial)
     @Override
@@ -207,6 +211,7 @@ public class LmdbJavaAgrona {
       }
       txn = env.txnRead();
       c = db.openCursor(txn);
+      xxh = XXHashFactory.nativeInstance().hash32();
     }
 
     @TearDown(Trial)

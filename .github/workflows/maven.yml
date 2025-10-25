@@ -8,27 +8,30 @@ on:
 
 jobs:
   build:
-    name: Java 11 Build and Verify
+    name: Java LTS Build and Verify
     runs-on: ubuntu-latest
 
     steps:
     - name: Check out Git repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v5
 
-    - name: Set up Java and Maven
-      uses: actions/setup-java@v3
+    - name: Set up JDK
+      uses: actions/setup-java@v5
       with:
-        distribution: zulu
-        java-version: 11
+        java-version: '25'
+        distribution: 'temurin'
         cache: maven
-
-    - name: Setup HTTPS mirror proxy for Maven Central (due to Chroncile Map POM)
-      uses: s4u/maven-settings-action@v2.8.0
-      with:
-        mirrors: '[{"id": "central-https-mirror", "name": "HTTPS Mirror of Maven Central", "mirrorOf": "central", "url": "https://repo1.maven.org/maven2"}]'
 
     - name: Build with Maven
       run: mvn -B verify
 
     - name: Simple benchmark test
-      run: java -jar target/benchmarks.jar -foe true -wi 0 -i 1 -f 1 -p num=512
+      run: |
+        java --add-opens java.base/java.lang=ALL-UNNAMED \
+             --add-opens java.base/java.lang.reflect=ALL-UNNAMED \
+             --add-opens java.base/java.nio=ALL-UNNAMED \
+             --add-exports java.base/jdk.internal.misc=ALL-UNNAMED \
+             --add-exports java.base/sun.nio.ch=ALL-UNNAMED \
+             --add-exports jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED \
+             --enable-native-access=ALL-UNNAMED \
+             -jar target/benchmarks.jar -foe true -wi 0 -i 1 -f 1 -p num=512 -r 3s

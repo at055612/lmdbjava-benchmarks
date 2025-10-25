@@ -24,7 +24,7 @@ import static java.lang.Boolean.TRUE;
 import static java.lang.System.setProperty;
 import static java.nio.ByteBuffer.allocateDirect;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static net.openhft.hashing.LongHashFunction.xx_r39;
+
 import static org.fusesource.lmdbjni.DirectBuffer.DISABLE_BOUNDS_CHECKS_PROP_NAME;
 import static org.lmdbjava.MaskedFlag.mask;
 import static org.lmdbjava.bench.CommonLmdbJava.POSIX_MODE;
@@ -38,6 +38,8 @@ import static org.openjdk.jmh.annotations.Scope.Benchmark;
 
 import java.io.IOException;
 
+import net.jpountz.xxhash.XXHash32;
+import net.jpountz.xxhash.XXHashFactory;
 import org.fusesource.lmdbjni.BufferCursor;
 import org.fusesource.lmdbjni.Database;
 import org.fusesource.lmdbjni.DirectBuffer;
@@ -114,8 +116,10 @@ public class LmdbJni {
     long result = 0;
     bh.consume(r.c.first());
     do {
-      result += xx_r39().hashMemory(r.c.keyBuffer().addressOffset(), r.keySize);
-      result += xx_r39().hashMemory(r.c.valBuffer().addressOffset(), r.valSize);
+      r.c.keyBuffer().getBytes(0, r.keyBytes, 0, r.keySize);
+      r.c.valBuffer().getBytes(0, r.valBytes, 0, r.valSize);
+      result += r.xxh.hash(r.keyBytes, 0, r.keySize, 0);
+      result += r.xxh.hash(r.valBytes, 0, r.valSize, 0);
     } while (r.c.next());
     bh.consume(result);
   }
@@ -232,6 +236,7 @@ public class LmdbJni {
 
     BufferCursor c;
     Transaction tx;
+    XXHash32 xxh;
 
     @Setup(Trial)
     @Override
@@ -240,6 +245,7 @@ public class LmdbJni {
       super.write();
       tx = env.createReadTransaction();
       c = db.bufferCursor(tx);
+      xxh = XXHashFactory.nativeInstance().hash32();
     }
 
     @TearDown(Trial)

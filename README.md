@@ -47,13 +47,32 @@ consistent, some libraries offer non-obvious tuning settings or usage patterns
 that might further reduce their latency. We do not claim we have exhausted
 every tuning option every library exposes, but pull requests are most welcome.
 
+## Build
+
+Clone this repository and build:
+
+```bash
+mvn clean package
+```
+
 ## Usage
+
 This benchmark uses POSIX calls to accurately determine consumed disk space and
 only depends on Linux-specific native library wrappers where a range of such
 wrappers exists. Operation on non-Linux operating systems is unsupported.
 
-1. Clone this repository and `mvn clean package`
-2. Run the benchmark with `java -jar target/benchmarks.jar`
+Run the benchmark:
+
+```bash
+java --add-opens java.base/java.lang=ALL-UNNAMED \
+     --add-opens java.base/java.lang.reflect=ALL-UNNAMED \
+     --add-opens java.base/java.nio=ALL-UNNAMED \
+     --add-exports java.base/jdk.internal.misc=ALL-UNNAMED \
+     --add-exports java.base/sun.nio.ch=ALL-UNNAMED \
+     --add-exports jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED \
+     --enable-native-access=ALL-UNNAMED \
+     -jar target/benchmarks.jar
+```
 
 The benchmark offers many parameters, but to reduce execution time they default
 to a fast, mechanically-sympathetic workload (ie integer keys, sequential IO)
@@ -78,6 +97,14 @@ iteration counts (`num`), key sizes and layout (`intKey`), value sizes
 sparse files are typical), but the actual on-disk space used. The underlying
 storage location defaults to the temporary file system. To force an alternate
 location, invoke Java with `-Djava.io.tmpdir=/somewhere/you/like`.
+
+## Version Management
+
+Update all dependency and plugin versions:
+
+```bash
+mvn versions:update-properties
+```
 
 ## Support
 

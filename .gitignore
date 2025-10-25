@@ -12,3 +12,5 @@ bin
 *.tag
 *.next
 *.jfr
+pom.xml.versionsBackup
+dependency-reduced-pom.xml
