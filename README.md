@@ -59,42 +59,40 @@ This benchmark uses POSIX calls to accurately determine consumed disk space and
 only depends on Linux-specific native library wrappers where a range of such
 wrappers exists. Operation on non-Linux operating systems is unsupported.
 
-Run the benchmark:
+### Running Benchmarks
+
+Use the provided `run.sh` script to execute benchmarks:
 
 ```bash
-java --add-opens java.base/java.lang=ALL-UNNAMED \
-     --add-opens java.base/java.lang.reflect=ALL-UNNAMED \
-     --add-opens java.base/java.nio=ALL-UNNAMED \
-     --add-exports java.base/jdk.internal.misc=ALL-UNNAMED \
-     --add-exports java.base/sun.nio.ch=ALL-UNNAMED \
-     --add-exports jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED \
-     --enable-native-access=ALL-UNNAMED \
-     -jar target/benchmarks.jar
+# Quick smoke test (1K entries, fast verification)
+./run.sh smoketest
+
+# Full benchmark using 25% of system RAM (default)
+./run.sh benchmark
+
+# Full benchmark using 50% of system RAM
+./run.sh benchmark 50
+
+# Full benchmark using 100% of system RAM
+./run.sh benchmark 100
 ```
 
-The benchmark offers many parameters, but to reduce execution time they default
-to a fast, mechanically-sympathetic workload (ie integer keys, sequential IO)
-that should fit in RAM. A default execution takes around 15 minutes on
-server-grade hardware (ie 2 x Intel Xeon E5-2667 v3 CPUs, 512 GB RAM etc).
+The benchmark auto-scales based on available RAM and caps at 1 million entries.
+Results are written to `target/benchmark/out-1.json` through `target/benchmark/out-6.json`
+along with human-readable logs in `target/benchmark/out-1.txt` through `target/benchmark/out-6.txt`.
 
-You can append ``-h`` to the ``java -jar`` line for JMH help. For example, use:
+### Generating Reports
 
-  * ``-foe true`` to stop on any error (recommended)
-  * ``-rf csv`` to emit a CSV results file (recommended)
-  * ``-f 3`` to run three forks for smaller error ranges (recommended)
-  * ``-lp`` to list all available parameters
-  * ``-p intKey=true,false`` to test both integer and string-based keys
+After running benchmarks, generate a comprehensive report with charts:
 
-The parameters (available from `-lp`) allow you to create workloads of different
-iteration counts (`num`), key sizes and layout (`intKey`), value sizes
-(`valSize`), mechanical sympathy (`sequential`, `valRandom`) and feature tuning
-(eg `forceSafe`, `writeMap` etc).
+```bash
+./report.sh
+```
 
-``System.out`` will display the actual on-disk usage of each implementation as
-``"Bytes" \t longVal \t benchId`` lines. This is not the "apparent" size (given
-sparse files are typical), but the actual on-disk space used. The underlying
-storage location defaults to the temporary file system. To force an alternate
-location, invoke Java with `-Djava.io.tmpdir=/somewhere/you/like`.
+This generates:
+- `target/benchmark/README.md` - Full markdown report with charts
+- `target/benchmark/index.html` - HTML viewer with embedded charts (open in browser)
+- Various SVG charts and supporting files
 
 ## Version Management
 
@@ -106,8 +104,8 @@ mvn versions:update-properties
 
 ## Support
 
-Please [open a GitHub issue](https://github.com/lmdbjava/benchmarks/issues)
-if you have any questions.
+Issues are disabled for this repository. Please report any issues or questions
+on the [LmdbJava issue tracker](https://github.com/lmdbjava/lmdbjava/issues).
 
 ## Contributing
 

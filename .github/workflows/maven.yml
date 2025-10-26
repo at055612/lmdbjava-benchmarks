@@ -25,13 +25,19 @@ jobs:
     - name: Build with Maven
       run: mvn -B verify
 
-    - name: Simple benchmark test
-      run: |
-        java --add-opens java.base/java.lang=ALL-UNNAMED \
-             --add-opens java.base/java.lang.reflect=ALL-UNNAMED \
-             --add-opens java.base/java.nio=ALL-UNNAMED \
-             --add-exports java.base/jdk.internal.misc=ALL-UNNAMED \
-             --add-exports java.base/sun.nio.ch=ALL-UNNAMED \
-             --add-exports jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED \
-             --enable-native-access=ALL-UNNAMED \
-             -jar target/benchmarks.jar -foe true -wi 0 -i 1 -f 1 -p num=512 -r 3s
+    - name: Install gnuplot for report generation
+      run: sudo apt-get update && sudo apt-get install -y gnuplot
+
+    - name: Run smoketest benchmarks
+      run: ./run.sh smoketest
+
+    - name: Generate benchmark report
+      run: ./report.sh
+
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: benchmark-smoketest-results
+        path: target/benchmark/
+        retention-days: 7
