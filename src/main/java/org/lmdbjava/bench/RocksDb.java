@@ -107,7 +107,7 @@ public class RocksDb {
   }
 
   @Benchmark
-  public void readXxh64(final Reader r, final Blackhole bh) {
+  public void readXxh32(final Reader r, final Blackhole bh) {
     long result = 0;
     final RocksIterator iterator = r.db.newIterator();
     iterator.seekToFirst();

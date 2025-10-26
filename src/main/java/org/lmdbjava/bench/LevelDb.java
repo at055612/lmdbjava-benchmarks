@@ -106,7 +106,7 @@ public class LevelDb {
   }
 
   @Benchmark
-  public void readXxh64(final Reader r, final Blackhole bh) throws IOException {
+  public void readXxh32(final Reader r, final Blackhole bh) throws IOException {
     long result = 0;
     try (DBIterator iterator = r.db.iterator()) {
       for (iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {

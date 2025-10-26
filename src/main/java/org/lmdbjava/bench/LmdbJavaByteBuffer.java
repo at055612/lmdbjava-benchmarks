@@ -104,7 +104,7 @@ public class LmdbJavaByteBuffer {
   }
 
   @Benchmark
-  public void readXxh64(final Reader r, final Blackhole bh) {
+  public void readXxh32(final Reader r, final Blackhole bh) {
     long result = 0;
     bh.consume(r.c.seek(MDB_FIRST));
     do {

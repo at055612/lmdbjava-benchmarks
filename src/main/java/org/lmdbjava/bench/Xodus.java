@@ -109,7 +109,7 @@ public class Xodus {
   }
 
   @Benchmark
-  public void readXxh64(final Reader r, final Blackhole bh) {
+  public void readXxh32(final Reader r, final Blackhole bh) {
     long result = 0;
     try (Cursor c = r.store.openCursor(r.tx)) {
       while (c.getNext()) {

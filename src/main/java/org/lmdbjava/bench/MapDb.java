@@ -101,7 +101,7 @@ public class MapDb {
   }
 
   @Benchmark
-  public void readXxh64(final Reader r, final Blackhole bh) {
+  public void readXxh32(final Reader r, final Blackhole bh) {
     long result = 0;
     final Iterator<Entry<byte[], byte[]>> iterator = r.map.entryIterator();
     while (iterator.hasNext()) {

@@ -103,7 +103,7 @@ public class MvStore {
   }
 
   @Benchmark
-  public void readXxh64(final Reader r, final Blackhole bh) {
+  public void readXxh32(final Reader r, final Blackhole bh) {
     long result = 0;
     final Cursor<byte[], byte[]> cursor = r.map.cursor(null, null, false);
     while (cursor.hasNext()) {

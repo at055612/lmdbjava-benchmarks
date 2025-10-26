@@ -149,7 +149,7 @@ public class LmdbLwjgl {
   }
 
   @Benchmark
-  public void readXxh64(final Reader r, final Blackhole bh) {
+  public void readXxh32(final Reader r, final Blackhole bh) {
     try (MemoryStack stack = stackPush()) {
       final MDBVal key = mallocStack(stack);
       final MDBVal val = mallocStack(stack);
