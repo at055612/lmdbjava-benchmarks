@@ -1,4 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright © 2016-2025 The LmdbJava Open Source Project
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.lmdbjava</groupId>
@@ -19,6 +36,7 @@
     <jnr-posix.version>3.1.21</jnr-posix.version>
     <leveldb-api.version>0.7</leveldb-api.version>
     <leveldbjni.version>1.8</leveldbjni.version>
+    <license-maven-plugin.version>4.6</license-maven-plugin.version>
     <lmdbjava.version>0.9.1</lmdbjava.version>
     <lmdbjni.version>0.4.7</lmdbjni.version>
     <lwjgl.version>3.3.6</lwjgl.version>
@@ -187,6 +205,43 @@
           </executions>
         </plugin>
         <plugin>
+          <groupId>com.mycila</groupId>
+          <artifactId>license-maven-plugin</artifactId>
+          <version>${license-maven-plugin.version}</version>
+          <configuration>
+            <licenseSets>
+              <licenseSet>
+                <header>src/misc/license-template.txt</header>
+                <excludes>
+                  <exclude>LICENSE.txt</exclude>
+                  <exclude>**/*.md</exclude>
+                  <exclude>results/**</exclude>
+                </excludes>
+              </licenseSet>
+            </licenseSets>
+            <useDefaultExcludes>true</useDefaultExcludes>
+          </configuration>
+          <dependencies>
+            <dependency>
+              <groupId>com.mycila</groupId>
+              <artifactId>license-maven-plugin-git</artifactId>
+              <version>${license-maven-plugin.version}</version>
+            </dependency>
+          </dependencies>
+          <executions>
+            <execution>
+              <id>apply-license</id>
+              <goals>
+                <goal>format</goal>
+              </goals>
+              <phase>package</phase>
+              <configuration>
+                <indentSize>2</indentSize>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>${maven-compiler-plugin.version}</version>
@@ -233,6 +288,10 @@
       <plugin>
         <groupId>com.github.ekryd.sortpom</groupId>
         <artifactId>sortpom-maven-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>com.mycila</groupId>
+        <artifactId>license-maven-plugin</artifactId>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -289,6 +348,10 @@
   </build>
   <url>https://github.com/${github.org}/${github.repo}</url>
   <inceptionYear>2016</inceptionYear>
+  <organization>
+    <name>The LmdbJava Open Source Project</name>
+    <url>https://github.com/lmdbjava</url>
+  </organization>
   <licenses>
     <license>
       <name>The Apache Software License, Version 2.0</name>
