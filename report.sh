@@ -96,8 +96,22 @@ CHRONICLE_VERSION=$(get_version "chronicle-map.version")
 # Get benchmark date (before cd)
 BENCH_DATE=$(stat -c %y "$WORK_DIR/out-1.json" | cut -d' ' -f1)
 
+# Detect benchmark mode by checking warmup iterations in the JSON
+WARMUP_ITERATIONS=$(jq -r '.[0].warmupIterations' "$WORK_DIR/out-1.json")
+if [ "$WARMUP_ITERATIONS" = "0" ]; then
+  BENCH_MODE="smoketest"
+else
+  BENCH_MODE="benchmark"
+fi
+
 # Change to working directory to generate all files there
 cd "$WORK_DIR"
+
+echo "Benchmark Mode: $BENCH_MODE"
+if [ "$BENCH_MODE" = "smoketest" ]; then
+  echo "  WARNING: Smoketest results are for verification only, not performance comparison"
+fi
+echo ""
 
 echo "System Information:"
 echo "  CPU: $CPU_MODEL (${CPU_COUNT} cores)"
@@ -129,6 +143,26 @@ available to Java applications. The benchmark tests various workload sizes with
 RAM-based auto-scaling (capped at 1 million entries), testing different value
 sizes, access patterns, and implementation-specific configurations.
 
+EOF
+
+# Add smoketest warning if applicable
+if [ "$BENCH_MODE" = "smoketest" ]; then
+  cat >> README.md <<'EOF'
+> **⚠️ SMOKETEST RESULTS**
+>
+> This report was generated from a **smoketest run** and should NOT be used for
+> performance comparisons or production decisions. Smoketest results have:
+> - **No warmup iterations** (JVM not optimized)
+> - **Single iteration** (no statistical validity)
+> - **Minimal entry counts** (1K entries only)
+> - **Short runtime** (quick verification only)
+>
+> For valid performance results, run `./run.sh benchmark` instead.
+
+EOF
+fi
+
+cat >> README.md <<EOF
 ## Methodology
 
 The benchmark was executed on ${BENCH_DATE} using
@@ -201,7 +235,20 @@ jq -r '.[] | select(.benchmark | contains("LmdbJavaByteBuffer")) |
   (if .params.forceSafe == "true" then "safe" else "unsafe" end) as $label |
   "\($bench)-\($label) \(.primaryMetric.score)"' out-1.json | sort > 1-forceSafe-reads.dat
 
-# Create gnuplot script for forceSafe
+# Add color codes to the forceSafe data based on benchmark type
+awk '{
+  bench = $1;
+  value = $2;
+  if (bench ~ /^readCrc-/) color = "0xe41a1c";
+  else if (bench ~ /^readKey-/) color = "0x984ea3";
+  else if (bench ~ /^readRev-/) color = "0xffff33";
+  else if (bench ~ /^readSeq-/) color = "0x377eb8";
+  else if (bench ~ /^readXxh32-/) color = "0x4daf4a";
+  else color = "0x000000";
+  print bench, value, color;
+}' 1-forceSafe-reads.dat > 1-forceSafe-colored.dat
+
+# Create gnuplot script for forceSafe with individual colors per bar
 cat > 1-forceSafe.gnuplot <<'GNUPLOT'
 set terminal svg size 800,600
 set output '1-forceSafe-reads.svg'
@@ -212,11 +259,11 @@ set style fill solid 0.25 border
 set boxwidth 0.5
 set xtics nomirror rotate by -270
 set grid y
-plot '1-forceSafe-reads.dat' using 2:xtic(1) with boxes notitle
+plot '1-forceSafe-colored.dat' using 0:2:3:xtic(1) with boxes lc rgbcolor variable notitle
 GNUPLOT
 
 gnuplot 1-forceSafe.gnuplot
-rm 1-forceSafe.gnuplot
+rm -f 1-forceSafe.gnuplot 1-forceSafe-colored.dat
 
 echo "  Generated 1-forceSafe-reads.svg"
 
@@ -245,7 +292,7 @@ set style fill solid 0.25 border
 set boxwidth 0.5
 set xtics nomirror rotate by -270
 set grid y
-plot '1-sync-writes.dat' using 4:xticlabels(sprintf("%s %s %s", stringcolumn(1), stringcolumn(2), stringcolumn(3))) with boxes notitle
+plot '1-sync-writes.dat' using 4:xticlabels(sprintf("%s %s %s", stringcolumn(1), stringcolumn(2), stringcolumn(3))) with boxes lc rgb "#ff7f00" notitle
 GNUPLOT
 
 gnuplot 1-sync.gnuplot
@@ -278,7 +325,7 @@ set style fill solid 0.25 border
 set boxwidth 0.5
 set xtics nomirror rotate by -270
 set grid y
-plot '1-writeMap-writes.dat' using 4:xticlabels(sprintf("%s %s %s", stringcolumn(1), stringcolumn(2), stringcolumn(3))) with boxes notitle
+plot '1-writeMap-writes.dat' using 4:xticlabels(sprintf("%s %s %s", stringcolumn(1), stringcolumn(2), stringcolumn(3))) with boxes lc rgb "#ff7f00" notitle
 GNUPLOT
 
 gnuplot 1-writeMap.gnuplot
@@ -408,7 +455,7 @@ set style fill solid 0.25 border
 set boxwidth 0.5
 set xtics nomirror rotate by -270
 set grid y
-plot '3-batchSize-writes.dat' using 3:xticlabels(sprintf("%s %s", stringcolumn(1), stringcolumn(2))) with boxes notitle
+plot '3-batchSize-writes.dat' using 3:xticlabels(sprintf("%s %s", stringcolumn(1), stringcolumn(2))) with boxes lc rgb "#ff7f00" notitle
 GNUPLOT
 
 gnuplot 3-batchSize.gnuplot
@@ -1517,12 +1564,29 @@ cat > index.html <<'HTML'
   </style>
 </head>
 <body>
-  <div id="content"></div>
+  <div id="content">Loading report...</div>
   <script>
     fetch('README.md')
-      .then(response => response.text())
+      .then(response => {
+        if (!response.ok) throw new Error('Failed to load README.md');
+        return response.text();
+      })
       .then(text => {
         document.getElementById('content').innerHTML = marked.parse(text);
+      })
+      .catch(error => {
+        document.getElementById('content').innerHTML =
+          '<div style="padding: 40px; background: #fff3cd; border: 2px solid #856404; border-radius: 8px;">' +
+          '<h2 style="color: #856404; margin-top: 0;">⚠️ Cannot Load Report</h2>' +
+          '<p>The report cannot be loaded when opening <code>index.html</code> directly as a file.</p>' +
+          '<p><strong>To view this report, run a local web server:</strong></p>' +
+          '<pre style="background: #f8f9fa; padding: 15px; border-radius: 5px; overflow-x: auto;">' +
+          'cd target/benchmark\n' +
+          'python3 -m http.server 8000\n' +
+          '</pre>' +
+          '<p>Then open <a href="http://localhost:8000">http://localhost:8000</a> in your browser</p>' +
+          '<p style="margin-top: 30px;"><strong>Alternatively:</strong> View <code>README.md</code> directly in any markdown viewer or on GitHub</p>' +
+          '</div>';
       });
   </script>
 </body>
@@ -1558,7 +1622,12 @@ echo "  - 6-size-16368.svg and 6-size-16368.md"
 echo "  - 6-intKey-rnd-16368.svg"
 echo "  - summary.svg"
 echo ""
-echo "To view the report, open $WORK_DIR/index.html in your web browser"
+echo "To view the HTML report:"
+echo "  cd $WORK_DIR"
+echo "  python3 -m http.server 8000"
+echo "  Then open http://localhost:8000 in your browser"
+echo ""
+echo "Alternatively, view README.md directly in your markdown viewer"
 echo ""
 echo "IMPORTANT: The generated README.md is a template based on the benchmark data."
 echo "Please review it carefully for correctness and adjust the commentary as needed"
