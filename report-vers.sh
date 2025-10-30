@@ -143,10 +143,10 @@ if [ "$BENCH_MODE" = "smoketest" ]; then
 >
 > This report was generated from a **smoketest run** and should NOT be used for
 > performance comparisons or production decisions. Smoketest results have:
-> - **No warmup iterations** (JVM not optimized)
-> - **Single iteration** (no statistical validity)
-> - **Minimal entry counts** (1K entries only)
-> - **Short runtime** (quick verification only)
+> - No warmup iterations
+> - Single iteration
+> - Minimal entry counts
+> - Short runtime
 >
 > For valid performance results, run \`./run-vers.sh benchmark\` instead.
 

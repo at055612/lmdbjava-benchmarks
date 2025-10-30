@@ -152,7 +152,7 @@ echo ""
 
 # Start generating README.md
 cat > README.md <<EOF
-## Introduction
+## LmdbJava Library Comparison Benchmarks
 
 This report provides a performance evaluation of embedded key-value stores
 available to Java applications. The benchmark tests various workload sizes with
@@ -168,12 +168,12 @@ if [ "$BENCH_MODE" = "smoketest" ]; then
 >
 > This report was generated from a **smoketest run** and should NOT be used for
 > performance comparisons or production decisions. Smoketest results have:
-> - **No warmup iterations** (JVM not optimized)
-> - **Single iteration** (no statistical validity)
-> - **Minimal entry counts** (1K entries only)
-> - **Short runtime** (quick verification only)
+> - No warmup iterations
+> - Single iteration
+> - Minimal entry counts
+> - Short runtime
 >
-> For valid performance results, run `./run.sh benchmark` instead.
+> For valid performance results, run `./run-libs.sh benchmark` instead.
 
 EOF
 fi
