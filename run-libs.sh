@@ -174,4 +174,4 @@ fi
 echo "Results available in $OUTPUT_DIR/out-libs-1.json through $OUTPUT_DIR/out-libs-6.json"
 echo "Human-readable logs in $OUTPUT_DIR/out-libs-1.txt through $OUTPUT_DIR/out-libs-6.txt"
 echo ""
-echo "To generate a report from these results, run: ./report.sh"
+echo "To generate a report from these results, run: ./report-libs.sh"
