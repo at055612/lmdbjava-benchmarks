@@ -83,6 +83,19 @@ The benchmark auto-scales based on available RAM and caps at 1 million entries.
 Results are written to `target/benchmark/out-libs-1.json` through `target/benchmark/out-libs-6.json`
 along with human-readable logs in `target/benchmark/out-libs-1.txt` through `target/benchmark/out-libs-6.txt`.
 
+#### Version Regression Testing
+
+Use the `run-vers.sh` script to test LmdbJava performance across versions:
+
+```bash
+# Quick smoke test (1K entries, fast verification)
+./run-vers.sh smoketest
+
+# Full benchmark using 25% of system RAM (default)
+./run-vers.sh benchmark
+```
+
+This tests selected LmdbJava versions from Maven Central plus current development branches to identify performance regressions.
 
 ### Generating Reports
 
@@ -91,6 +104,8 @@ After running library comparison benchmarks, generate a comprehensive report:
 ```bash
 ./report-libs.sh
 ```
+
+After running version regression tests, generate a version comparison report:
 
 ```bash
 ./report-vers.sh
