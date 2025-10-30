@@ -23,9 +23,9 @@ WORK_DIR="target/benchmark"
 # Check prerequisites
 echo "Checking for required files..."
 for i in {1..6}; do
-  if [ ! -f "$WORK_DIR/out-${i}.json" ] || [ ! -f "$WORK_DIR/out-${i}.txt" ]; then
-    echo "ERROR: Missing $WORK_DIR/out-${i}.json or $WORK_DIR/out-${i}.txt"
-    echo "Please run ./run.sh first to generate benchmark results"
+  if [ ! -f "$WORK_DIR/out-libs-${i}.json" ] || [ ! -f "$WORK_DIR/out-libs-${i}.txt" ]; then
+    echo "ERROR: Missing $WORK_DIR/out-libs-${i}.json or $WORK_DIR/out-libs-${i}.txt"
+    echo "Please run ./run-libs.sh first to generate benchmark results"
     exit 1
   fi
 done
