@@ -41,8 +41,8 @@ echo "Detected RAM: ${TOTAL_RAM_GB} GB"
 case $MODE in
   smoketest)
     # Fixed small dataset for verification
-    ITER_OPTS="-wi 0 -i 1 -f 1"
-    R_OPTS="-r 3s"
+    ITER_OPTS="-wi 1 -i 1 -f 1"
+    R_OPTS="-r 5s"
 
     # Fixed 1K entries for all runs
     NUM_RUN1=1000
@@ -58,7 +58,7 @@ case $MODE in
   benchmark)
     # Production benchmark with RAM-based scaling
     ITER_OPTS="-wi 3 -i 3 -f 3"
-    R_OPTS=""
+    R_OPTS="-r 120s"
 
     # Calculate max RAM in bytes (RAM_PERCENT of total)
     MAX_RAM_GB=$((TOTAL_RAM_GB * RAM_PERCENT / 100))
@@ -119,8 +119,12 @@ case $MODE in
     ;;
 esac
 
-# Single-shot benchmarks settings
-SS_OPTS="-bm ss -wi 0 -i 1 -f 1"
+# Single-shot benchmarks settings (align with main benchmark mode)
+if [ "$MODE" = "smoketest" ]; then
+  SS_OPTS="-bm ss -wi 1 -i 1 -f 1"
+else
+  SS_OPTS="-bm ss -wi 3 -i 3 -f 3"
+fi
 
 # Clean and create output directory
 OUTPUT_DIR="target/benchmark"
@@ -135,39 +139,39 @@ echo ""
 # Run 1: LMDB configuration options (sync, forceSafe, metaSync, writeMap) with 100B values
 # RAM-scaled to test configuration impact across different LMDB implementations
 echo "Run 1: LMDB implementations with configuration options (${NUM_RUN1} entries)..."
-java $JVM_OPTS -jar target/benchmarks.jar -rf json $ITER_OPTS $R_OPTS -to 10m -tu ms -p num=${NUM_RUN1} -p sync=true,false -p forceSafe=true,false -p metaSync=true,false -p writeMap=true,false -rff "$OUTPUT_DIR"/out-1.json LmdbJavaAgrona LmdbJavaByteBuffer LmdbJni LmdbLwjgl | tee "$OUTPUT_DIR"/out-1.txt
+java $JVM_OPTS -jar target/benchmarks.jar -rf json $ITER_OPTS $R_OPTS -to 10m -tu ms -p num=${NUM_RUN1} -p sync=true,false -p forceSafe=true,false -p metaSync=true,false -p writeMap=true,false -rff "$OUTPUT_DIR"/out-libs-1.json LmdbJavaAgrona LmdbJavaByteBuffer LmdbJni LmdbLwjgl | tee "$OUTPUT_DIR"/out-libs-1.txt
 
 # Run 2: Page boundary alignment testing with values from 2KB to 16KB
 # RAM-scaled to test performance at different page sizes (2026/2027, 4080/4081, 8176/8177, 16368/16369)
 echo "Run 2: Value size testing (${NUM_RUN2} entries)..."
-java $JVM_OPTS -jar target/benchmarks.jar -rf json $SS_OPTS $R_OPTS -to 10m -tu ms -p num=${NUM_RUN2} -p sequential=true,false -p valSize=2026,2027,4080,4081,8176,8177,16368,16369 -e readCrc -e readRev -e readSeq -e readXxh32 -e write -rff "$OUTPUT_DIR"/out-2.json LevelDb LmdbJavaAgrona RocksDb | tee "$OUTPUT_DIR"/out-2.txt
+java $JVM_OPTS -jar target/benchmarks.jar -rf json $SS_OPTS $R_OPTS -to 10m -tu ms -p num=${NUM_RUN2} -p sequential=true,false -p valSize=2026,2027,4080,4081,8176,8177,16368,16369 -e readCrc -e readRev -e readSeq -e readXxh32 -e write -rff "$OUTPUT_DIR"/out-libs-2.json LevelDb LmdbJavaAgrona RocksDb | tee "$OUTPUT_DIR"/out-libs-2.txt
 
 # Run 3: LSM batch size optimization for LevelDB and RocksDB with 8KB values
 # RAM-scaled to evaluate 1M vs 10M batch sizes on write performance
 echo "Run 3: Batch size evaluation (${NUM_RUN3} entries)..."
-java $JVM_OPTS -jar target/benchmarks.jar -rf json $SS_OPTS $R_OPTS -to 60m -tu ms -p num=${NUM_RUN3} -p valSize=8176 -p batchSize=1000000,10000000 -e readCrc -e readKey -e readRev -e readSeq -e readXxh32 -rff "$OUTPUT_DIR"/out-3.json LevelDb RocksDb | tee "$OUTPUT_DIR"/out-3.txt
+java $JVM_OPTS -jar target/benchmarks.jar -rf json $SS_OPTS $R_OPTS -to 60m -tu ms -p num=${NUM_RUN3} -p valSize=8176 -p batchSize=1000000,10000000 -e readCrc -e readKey -e readRev -e readSeq -e readXxh32 -rff "$OUTPUT_DIR"/out-libs-3.json LevelDb RocksDb | tee "$OUTPUT_DIR"/out-libs-3.txt
 
 # Run 4: Comprehensive test of all libraries with 100B values
 # RAM-scaled to test int vs string keys and sequential vs random access patterns
 echo "Run 4: All libraries with key and access pattern variants (${NUM_RUN4} entries)..."
-java $JVM_OPTS -jar target/benchmarks.jar -rf json $ITER_OPTS $R_OPTS -to 60m -tu ms -p num=${NUM_RUN4} -p intKey=true,false -p sequential=true,false -rff "$OUTPUT_DIR"/out-4.json | tee "$OUTPUT_DIR"/out-4.txt
+java $JVM_OPTS -jar target/benchmarks.jar -rf json $ITER_OPTS $R_OPTS -to 60m -tu ms -p num=${NUM_RUN4} -p intKey=true,false -p sequential=true,false -rff "$OUTPUT_DIR"/out-libs-4.json | tee "$OUTPUT_DIR"/out-libs-4.txt
 
 # Run 5: Large value (2KB) testing with broad library coverage
 # RAM-scaled, excludes hash benchmarks to reduce execution time
 echo "Run 5: Large value testing (${NUM_RUN5} entries, 2KB values)..."
-java $JVM_OPTS -jar target/benchmarks.jar -rf json $SS_OPTS $R_OPTS -to 120m -tu ms -p num=${NUM_RUN5} -p sequential=true,false -p batchSize=1000000 -p valSize=2026 -e readCrc -e readRev -e readXxh32 -rff "$OUTPUT_DIR"/out-5.json Chronicle LevelDb LmdbJavaAgrona LmdbJavaByteBuffer LmdbJni LmdbLwjgl RocksDb MapDb Xodus | tee "$OUTPUT_DIR"/out-5.txt
+java $JVM_OPTS -jar target/benchmarks.jar -rf json $SS_OPTS $R_OPTS -to 120m -tu ms -p num=${NUM_RUN5} -p sequential=true,false -p batchSize=1000000 -p valSize=2026 -e readCrc -e readRev -e readXxh32 -rff "$OUTPUT_DIR"/out-libs-5.json Chronicle LevelDb LmdbJavaAgrona LmdbJavaByteBuffer LmdbJni LmdbLwjgl RocksDb MapDb Xodus | tee "$OUTPUT_DIR"/out-libs-5.txt
 
 # Run 6: Very large value (4-16KB) testing with fastest libraries only
 # RAM-scaled, excludes pure Java and slower LMDB implementations due to memory constraints
 echo "Run 6: Very large value testing (${NUM_RUN6} entries, 4-16KB values)..."
-java $JVM_OPTS -jar target/benchmarks.jar -rf json $SS_OPTS $R_OPTS -to 360m -tu ms -p num=${NUM_RUN6} -p sequential=false -p batchSize=1000000 -p valSize=4080,8176,16368 -e readCrc -e readRev -e readXxh32 -rff "$OUTPUT_DIR"/out-6.json Chronicle LevelDb LmdbJavaAgrona RocksDb | tee "$OUTPUT_DIR"/out-6.txt
+java $JVM_OPTS -jar target/benchmarks.jar -rf json $SS_OPTS $R_OPTS -to 360m -tu ms -p num=${NUM_RUN6} -p sequential=false -p batchSize=1000000 -p valSize=4080,8176,16368 -e readCrc -e readRev -e readXxh32 -rff "$OUTPUT_DIR"/out-libs-6.json Chronicle LevelDb LmdbJavaAgrona RocksDb | tee "$OUTPUT_DIR"/out-libs-6.txt
 
 echo ""
 echo "Benchmark suite completed in $MODE mode"
 if [ "$MODE" = "benchmark" ]; then
   echo "RAM usage limit: ${RAM_PERCENT}% of ${TOTAL_RAM_GB} GB (${MAX_RAM_GB} GB max)"
 fi
-echo "Results available in $OUTPUT_DIR/out-1.json through $OUTPUT_DIR/out-6.json"
-echo "Human-readable logs in $OUTPUT_DIR/out-1.txt through $OUTPUT_DIR/out-6.txt"
+echo "Results available in $OUTPUT_DIR/out-libs-1.json through $OUTPUT_DIR/out-libs-6.json"
+echo "Human-readable logs in $OUTPUT_DIR/out-libs-1.txt through $OUTPUT_DIR/out-libs-6.txt"
 echo ""
 echo "To generate a report from these results, run: ./report.sh"

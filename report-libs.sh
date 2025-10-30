@@ -110,10 +110,10 @@ XODUS_VERSION=$(get_version "xodus.version")
 CHRONICLE_VERSION=$(get_version "chronicle-map.version")
 
 # Get benchmark date (before cd)
-BENCH_DATE=$(stat -c %y "$WORK_DIR/out-1.json" | cut -d' ' -f1)
+BENCH_DATE=$(stat -c %y "$WORK_DIR/out-libs-1.json" | cut -d' ' -f1)
 
 # Detect benchmark mode by checking warmup iterations in the JSON
-WARMUP_ITERATIONS=$(jq -r '.[0].warmupIterations' "$WORK_DIR/out-1.json")
+WARMUP_ITERATIONS=$(jq -r '.[0].warmupIterations' "$WORK_DIR/out-libs-1.json")
 if [ "$WARMUP_ITERATIONS" = "0" ]; then
   BENCH_MODE="smoketest"
 else
@@ -249,7 +249,7 @@ jq -r '.[] | select(.benchmark | contains("LmdbJavaByteBuffer")) |
   select(.params.writeMap == "true") |
   (.benchmark | split(".")[-1]) as $bench |
   (if .params.forceSafe == "true" then "safe" else "unsafe" end) as $label |
-  "\($bench)-\($label) \(.primaryMetric.score)"' out-1.json | sort > 1-forceSafe-reads.dat
+  "\($bench)-\($label) \(.primaryMetric.score)"' out-libs-1.json | sort > 1-forceSafe-reads.dat
 
 # Add color codes to the forceSafe data based on benchmark type
 awk '{
@@ -296,7 +296,7 @@ jq -r '.[] | select(.benchmark | contains(".write")) |
     elif . == "LmdbLwjgl" then "LMDB JGL"
     else . end) as $impl |
   (if .params.sync == "true" then "sync" else "nosync" end) as $sync |
-  "\($impl) (\($sync)) \(.primaryMetric.score)"' out-1.json | sort > 1-sync-writes.dat
+  "\($impl) (\($sync)) \(.primaryMetric.score)"' out-libs-1.json | sort > 1-sync-writes.dat
 
 cat > 1-sync.gnuplot <<'GNUPLOT'
 set terminal svg size 800,600
@@ -329,7 +329,7 @@ jq -r '.[] | select(.benchmark | contains(".write")) |
     elif . == "LmdbLwjgl" then "LMDB JGL"
     else . end) as $impl |
   (if .params.writeMap == "true" then "wm" else "!wm" end) as $wmap |
-  "\($impl) (\($wmap)) \(.primaryMetric.score)"' out-1.json | sort > 1-writeMap-writes.dat
+  "\($impl) (\($wmap)) \(.primaryMetric.score)"' out-libs-1.json | sort > 1-writeMap-writes.dat
 
 cat > 1-writeMap.gnuplot <<'GNUPLOT'
 set terminal svg size 800,600
@@ -392,7 +392,7 @@ echo "Processing Run 2: Page Boundary Alignment..."
 
 # Run 2: Extract storage bytes from TXT file for random access
 # Line 159 from process.sh: grep 'sequential-false' out-2.tsv | grep 'after-close' | sed -r 's/Bytes\tafter-close\t([0-9]+)\torg.lmdbjava.bench.([a-z|A-Z]+).*-valSize-([0-9]+).*/\1 "\2 \3"/g' > 2-size.dat
-grep 'sequential-false' out-2.txt | grep 'after-close' | sed -r 's/Bytes\tafter-close\t([0-9]+)\torg.lmdbjava.bench.([a-z|A-Z]+).*-valSize-([0-9]+).*/\3|\2|\1/g' | \
+grep 'sequential-false' out-libs-2.txt | grep 'after-close' | sed -r 's/Bytes\tafter-close\t([0-9]+)\torg.lmdbjava.bench.([a-z|A-Z]+).*-valSize-([0-9]+).*/\3|\2|\1/g' | \
   sed 's/LmdbJavaAgrona/LMDB_DB/g' | \
   sed 's/LevelDb/LevelDB/g' | \
   sed 's/RocksDb/RocksDB/g' | \
@@ -458,7 +458,7 @@ jq -r '.[] | select(.benchmark | contains(".write")) |
     elif . == "RocksDb" then "RocksDB"
     else . end) as $impl |
   (.params.batchSize | tonumber / 1000000 | tostring) as $batch |
-  "\($impl) \($batch)M \(.primaryMetric.score)"' out-3.json | \
+  "\($impl) \($batch)M \(.primaryMetric.score)"' out-libs-3.json | \
   sort -k1,1 -k2,2n > 3-batchSize-writes.dat
 
 cat > 3-batchSize.gnuplot <<'GNUPLOT'
@@ -518,12 +518,12 @@ EOF
 echo "Processing Run 4: All Libraries with 100 Byte Values..."
 
 # Get the actual number of entries from Run 4
-NUM_ENTRIES=$(jq -r '.[0].params.num' out-4.json)
+NUM_ENTRIES=$(jq -r '.[0].params.num' out-libs-4.json)
 FLAT_ARRAY_SIZE=$((NUM_ENTRIES * 104))
 
 # Extract storage size for intKey-true, sequential-false (random access)
 echo "${FLAT_ARRAY_SIZE} \"(Flat Array)\"" > 4-size-sorted.dat
-grep 'intKey-true-num-'${NUM_ENTRIES}'-sequential-false' out-4.txt | grep 'after-close' | \
+grep 'intKey-true-num-'${NUM_ENTRIES}'-sequential-false' out-libs-4.txt | grep 'after-close' | \
   sed -r 's/Bytes\tafter-close\t([0-9]+)\torg.lmdbjava.bench.([a-z|A-Z]+).*/\1|\2/g' | \
   sed 's/LmdbJavaAgrona/LMDB_DB/g' | \
   sed 's/LmdbJavaByteBuffer/LMDB_BB/g' | \
@@ -598,7 +598,7 @@ jq -r '.[] | select(.params.intKey == "true") |
     elif . == "MapDb" then "MapDB"
     elif . == "MvStore" then "MVStore"
     else . end) as $impl |
-  "true \"\($bench).\($impl)\" true \(.primaryMetric.score)"' out-4.json > 4-intKey-seq-all.dat
+  "true \"\($bench).\($impl)\" true \(.primaryMetric.score)"' out-libs-4.json > 4-intKey-seq-all.dat
 
 # Split by benchmark type and remove benchmark prefix from labels
 for BENCH in readCrc readKey readRev readSeq readXxh32 write; do
@@ -667,7 +667,7 @@ jq -r '.[] | select(.params.intKey == "false") |
     elif . == "MapDb" then "MapDB"
     elif . == "MvStore" then "MVStore"
     else . end) as $impl |
-  "false \"\($bench).\($impl)\" true \(.primaryMetric.score)"' out-4.json > 4-strKey-seq-all.dat
+  "false \"\($bench).\($impl)\" true \(.primaryMetric.score)"' out-libs-4.json > 4-strKey-seq-all.dat
 
 # Split by benchmark type and remove benchmark prefix from labels
 for BENCH in readCrc readKey readRev readSeq readXxh32 write; do
@@ -736,7 +736,7 @@ jq -r '.[] | select(.params.intKey == "true") |
     elif . == "MapDb" then "MapDB"
     elif . == "MvStore" then "MVStore"
     else . end) as $impl |
-  "true \"\($bench).\($impl)\" false \(.primaryMetric.score)"' out-4.json > 4-intKey-rnd-all.dat
+  "true \"\($bench).\($impl)\" false \(.primaryMetric.score)"' out-libs-4.json > 4-intKey-rnd-all.dat
 
 # Split by benchmark type and remove benchmark prefix from labels
 for BENCH in readCrc readKey readRev readSeq readXxh32 write; do
@@ -805,7 +805,7 @@ jq -r '.[] | select(.params.intKey == "false") |
     elif . == "MapDb" then "MapDB"
     elif . == "MvStore" then "MVStore"
     else . end) as $impl |
-  "false \"\($bench).\($impl)\" false \(.primaryMetric.score)"' out-4.json > 4-strKey-rnd-all.dat
+  "false \"\($bench).\($impl)\" false \(.primaryMetric.score)"' out-libs-4.json > 4-strKey-rnd-all.dat
 
 # Split by benchmark type and remove benchmark prefix from labels
 for BENCH in readCrc readKey readRev readSeq readXxh32 write; do
@@ -927,12 +927,12 @@ EOF
 echo "Processing Run 5: Large Value Testing..."
 
 # Get the actual number of entries from Run 5
-NUM_ENTRIES_5=$(jq -r '.[0].params.num' out-5.json)
+NUM_ENTRIES_5=$(jq -r '.[0].params.num' out-libs-5.json)
 FLAT_ARRAY_SIZE_5=$((NUM_ENTRIES_5 * 2030))
 
 # Extract storage size for Run 5 (intKey-true, sequential-false, valSize=2026)
 echo "${FLAT_ARRAY_SIZE_5} \"(Flat Array)\"" > 5-size-sorted.dat
-grep 'intKey-true-num-'${NUM_ENTRIES_5}'-sequential-false.*valSize-2026' out-5.txt | grep 'after-close' | \
+grep 'intKey-true-num-'${NUM_ENTRIES_5}'-sequential-false.*valSize-2026' out-libs-5.txt | grep 'after-close' | \
   sed -r 's/Bytes\tafter-close\t([0-9]+)\torg.lmdbjava.bench.([a-z|A-Z]+).*/\1|\2/g' | \
   sed 's/LmdbJavaAgrona/LMDB_DB/g' | \
   sed 's/LmdbJavaByteBuffer/LMDB_BB/g' | \
@@ -1007,7 +1007,7 @@ jq -r '.[] | select(.params.intKey == "true") |
     elif . == "RocksDb" then "RocksDB"
     elif . == "MapDb" then "MapDB"
     else . end) as $impl |
-  "true \"\($bench).\($impl)\" true \(.primaryMetric.score)"' out-5.json > 5-intKey-seq-all.dat
+  "true \"\($bench).\($impl)\" true \(.primaryMetric.score)"' out-libs-5.json > 5-intKey-seq-all.dat
 
 # Split by benchmark type and remove benchmark prefix from labels
 for BENCH in readKey readSeq write; do
@@ -1064,7 +1064,7 @@ jq -r '.[] | select(.params.intKey == "true") |
     elif . == "RocksDb" then "RocksDB"
     elif . == "MapDb" then "MapDB"
     else . end) as $impl |
-  "true \"\($bench).\($impl)\" false \(.primaryMetric.score)"' out-5.json > 5-intKey-rnd-all.dat
+  "true \"\($bench).\($impl)\" false \(.primaryMetric.score)"' out-libs-5.json > 5-intKey-rnd-all.dat
 
 # Split by benchmark type and remove benchmark prefix from labels
 for BENCH in readKey readSeq write; do
@@ -1153,7 +1153,7 @@ EOF
 echo "Processing Run 6: Very Large Value Testing..."
 
 # Get the actual number of entries from Run 6
-NUM_ENTRIES_6=$(jq -r '.[0].params.num' out-6.json)
+NUM_ENTRIES_6=$(jq -r '.[0].params.num' out-libs-6.json)
 
 # Process each value size (4080, 8176, 16368)
 for VALSIZE in 4080 8176 16368; do
@@ -1162,7 +1162,7 @@ for VALSIZE in 4080 8176 16368; do
 
   # Extract storage size for this value size
   echo "${FLAT_ARRAY_SIZE} \"(Flat Array)\"" > 6-size-${VALSIZE}-sorted.dat
-  grep "intKey-true-num-${NUM_ENTRIES_6}-sequential-false.*valSize-${VALSIZE}" out-6.txt | grep 'after-close' | \
+  grep "intKey-true-num-${NUM_ENTRIES_6}-sequential-false.*valSize-${VALSIZE}" out-libs-6.txt | grep 'after-close' | \
     sed -r 's/Bytes\tafter-close\t([0-9]+)\torg.lmdbjava.bench.([a-z|A-Z]+).*/\1|\2/g' | \
     sed 's/LmdbJavaAgrona/LMDB_DB/g' | \
     sed 's/LevelDb/LevelDB/g' | \
@@ -1229,7 +1229,7 @@ GNUPLOT
       elif . == "LevelDb" then "LevelDB"
       elif . == "RocksDb" then "RocksDB"
       else . end) as $impl |
-    "true \"\($bench).\($impl)\" false \(.primaryMetric.score)"' out-6.json > 6-intKey-rnd-${VALSIZE}-all.dat
+    "true \"\($bench).\($impl)\" false \(.primaryMetric.score)"' out-libs-6.json > 6-intKey-rnd-${VALSIZE}-all.dat
 
   # Split by benchmark type and remove benchmark prefix from labels
   for BENCH in readKey readSeq write; do
@@ -1407,7 +1407,7 @@ jq -r '.[] | select(.params.intKey == "true") |
     elif . == "MapDb" then "MapDB"
     elif . == "MvStore" then "MVStore"
     else . end) as $impl |
-  "true \"\($bench).\($impl)\" true \(.primaryMetric.score)"' out-4.json > summary-all.dat
+  "true \"\($bench).\($impl)\" true \(.primaryMetric.score)"' out-libs-4.json > summary-all.dat
 
 for BENCH in readCrc readKey readRev readSeq readXxh32 write; do
   grep "\"${BENCH}\." summary-all.dat | sed "s/\"${BENCH}\./\"/g" > 4-intKey-seq-${BENCH}.dat
@@ -1487,7 +1487,7 @@ EOF
 
 echo "Generating HTML viewer..."
 
-# Create simple HTML viewer that uses marked.js to render README.md
+# Create HTML viewer with GitHub markdown CSS and markdown-it
 cat > index.html <<'HTML'
 <!DOCTYPE html>
 <html lang="en">
@@ -1495,115 +1495,62 @@ cat > index.html <<'HTML'
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LmdbJava Benchmarks Report</title>
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown.min.css">
   <style>
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      line-height: 1.6;
-      max-width: 1200px;
+      box-sizing: border-box;
+      min-width: 200px;
+      max-width: 980px;
       margin: 0 auto;
-      padding: 20px;
-      color: #333;
+      padding: 45px;
       background: #f5f5f5;
     }
-    #content {
+    .markdown-body {
+      box-sizing: border-box;
       background: white;
       padding: 40px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-    h2 {
-      color: #2c3e50;
-      border-bottom: 2px solid #3498db;
-      padding-bottom: 10px;
-      margin-top: 40px;
-    }
-    h3 {
-      color: #34495e;
-      margin-top: 30px;
-    }
-    h4 {
-      color: #555;
-      margin-top: 20px;
-    }
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      margin: 20px 0;
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 12px;
-      text-align: left;
-    }
-    th {
-      background-color: #3498db;
-      color: white;
-    }
-    tr:nth-child(even) {
-      background-color: #f9f9f9;
-    }
-    code {
-      background: #f4f4f4;
-      padding: 2px 6px;
-      border-radius: 3px;
-      font-family: 'Courier New', monospace;
-    }
-    pre {
-      background: #f4f4f4;
-      padding: 15px;
-      border-radius: 5px;
-      overflow-x: auto;
-    }
-    pre code {
-      background: transparent;
-      padding: 0;
-    }
-    img {
-      max-width: 100%;
-      height: auto;
-      display: block;
-      margin: 20px auto;
-    }
-    ul {
-      margin: 15px 0;
-    }
-    li {
-      margin: 8px 0;
-    }
-    a {
-      color: #3498db;
-      text-decoration: none;
-    }
-    a:hover {
-      text-decoration: underline;
-    }
   </style>
 </head>
 <body>
-  <div id="content">Loading report...</div>
-  <script>
-    fetch('README.md')
-      .then(response => {
-        if (!response.ok) throw new Error('Failed to load README.md');
-        return response.text();
-      })
-      .then(text => {
-        document.getElementById('content').innerHTML = marked.parse(text);
-      })
-      .catch(error => {
-        document.getElementById('content').innerHTML =
-          '<div style="padding: 40px; background: #fff3cd; border: 2px solid #856404; border-radius: 8px;">' +
-          '<h2 style="color: #856404; margin-top: 0;">⚠️ Cannot Load Report</h2>' +
-          '<p>The report cannot be loaded when opening <code>index.html</code> directly as a file.</p>' +
-          '<p><strong>To view this report, run a local web server:</strong></p>' +
-          '<pre style="background: #f8f9fa; padding: 15px; border-radius: 5px; overflow-x: auto;">' +
-          'cd target/benchmark\n' +
-          'python3 -m http.server 8000\n' +
-          '</pre>' +
-          '<p>Then open <a href="http://localhost:8000">http://localhost:8000</a> in your browser</p>' +
-          '<p style="margin-top: 30px;"><strong>Alternatively:</strong> View <code>README.md</code> directly in any markdown viewer or on GitHub</p>' +
-          '</div>';
-      });
+  <div class="markdown-body" id="content">Loading report...</div>
+  <script type="module">
+    import markdownit from 'https://cdn.jsdelivr.net/npm/markdown-it@14/+esm';
+    const md = markdownit();
+
+    // Check if we're running from file://
+    if (window.location.protocol === 'file:') {
+      document.getElementById('content').innerHTML = `
+        <div style="padding: 40px; background: #fff3cd; border: 2px solid #856404; border-radius: 8px;">
+          <h2 style="color: #856404; margin-top: 0;">⚠️ Cannot Load Report</h2>
+          <p>The report cannot be loaded when opening <code>index.html</code> directly as a file.</p>
+          <p><strong>To view this report, run a local web server:</strong></p>
+          <pre style="background: #f8f9fa; padding: 15px; border-radius: 5px; overflow-x: auto;">cd target/benchmark
+python3 -m http.server 8000</pre>
+          <p>Then open <a href="http://localhost:8000">http://localhost:8000</a> in your browser</p>
+          <p style="margin-top: 30px;"><strong>Alternatively:</strong> View <code>README.md</code> directly in any markdown viewer or on GitHub</p>
+        </div>
+      `;
+    } else {
+      fetch('README.md')
+        .then(response => {
+          if (!response.ok) throw new Error('Failed to load README.md');
+          return response.text();
+        })
+        .then(text => {
+          document.getElementById('content').innerHTML = md.render(text);
+        })
+        .catch(error => {
+          document.getElementById('content').innerHTML = `
+            <div style="padding: 40px; background: #fff3cd; border: 2px solid #856404; border-radius: 8px;">
+              <h2 style="color: #856404; margin-top: 0;">⚠️ Error Loading Report</h2>
+              <p>Failed to load README.md: ${error.message}</p>
+              <p><strong>Alternatively:</strong> View <code>README.md</code> directly in any markdown viewer</p>
+            </div>
+          `;
+        });
+    }
   </script>
 </body>
 </html>

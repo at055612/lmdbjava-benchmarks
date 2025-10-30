@@ -80,8 +80,9 @@ Use the `run-libs.sh` script to compare different key-value store libraries:
 ```
 
 The benchmark auto-scales based on available RAM and caps at 1 million entries.
-Results are written to `target/benchmark/out-1.json` through `target/benchmark/out-6.json`
-along with human-readable logs in `target/benchmark/out-1.txt` through `target/benchmark/out-6.txt`.
+Results are written to `target/benchmark/out-libs-1.json` through `target/benchmark/out-libs-6.json`
+along with human-readable logs in `target/benchmark/out-libs-1.txt` through `target/benchmark/out-libs-6.txt`.
+
 
 ### Generating Reports
 
