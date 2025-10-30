@@ -90,7 +90,7 @@ TEMP_OUTPUT_DIR=$(mktemp -d)
 echo "Using temporary directory: ${TEMP_OUTPUT_DIR}"
 
 # Final output directory
-FINAL_OUTPUT_DIR="target/benchmark"
+FINAL_OUTPUT_DIR="target/benchmark-vers"
 
 # JVM flags for Java 9+ module system compatibility
 JVM_OPTS="--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.nio=ALL-UNNAMED --add-exports java.base/jdk.internal.misc=ALL-UNNAMED --add-exports java.base/sun.nio.ch=ALL-UNNAMED --add-exports jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --enable-native-access=ALL-UNNAMED"

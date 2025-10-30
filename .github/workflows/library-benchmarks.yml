@@ -1,16 +1,16 @@
-name: Version Benchmarks
+name: Library Benchmarks
 
 on:
   # Manual trigger
   workflow_dispatch:
 
-  # Daily at 3am UTC
+  # Daily at 2am UTC
   schedule:
-    - cron: '0 3 * * *'
+    - cron: '0 2 * * *'
 
 jobs:
   benchmark:
-    name: Run Version Regression Benchmarks
+    name: Run Library Comparison Benchmarks
     runs-on: ubuntu-latest
     timeout-minutes: 120
 
@@ -31,12 +31,12 @@ jobs:
     - name: Install dependencies for report generation
       run: sudo apt-get update && sudo apt-get install -y gnuplot jq
 
-    - name: Run version regression benchmarks (smoketest mode)
-      run: ./run-vers.sh smoketest
+    - name: Run library comparison benchmarks (smoketest mode)
+      run: ./run-libs.sh smoketest
       timeout-minutes: 60
 
-    - name: Generate version regression report
-      run: ./report-vers.sh
+    - name: Generate library comparison report
+      run: ./report-libs.sh
 
     - name: Install wrangler
       run: npm install -g wrangler

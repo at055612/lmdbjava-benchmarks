@@ -17,17 +17,18 @@
 
 set -euo pipefail
 
-# Set working directory
+# Set data directory (input from run-vers.sh) and output directory
+DATA_DIR="target/benchmark-vers"
 WORK_DIR="target/benchmark"
 
 # Check prerequisites
 echo "Checking for required files..."
 
 # Count available version/branch JSON files (new naming: out-version-*.json, out-branch-*.json)
-JSON_COUNT=$(find "$WORK_DIR" -name "out-version-*.json" -o -name "out-branch-*.json" 2>/dev/null | wc -l)
+JSON_COUNT=$(find "$DATA_DIR" -name "out-version-*.json" -o -name "out-branch-*.json" 2>/dev/null | wc -l)
 
 if [ $JSON_COUNT -lt 2 ]; then
-  echo "ERROR: Need at least 2 version benchmark result files in $WORK_DIR"
+  echo "ERROR: Need at least 2 version benchmark result files in $DATA_DIR"
   echo "Please run ./run-vers.sh first to generate version benchmark results"
   exit 1
 fi
@@ -88,7 +89,7 @@ KERNEL=$(get_kernel)
 JAVA_VERSION=$(get_java_version)
 
 # Get benchmark date from first available file
-FIRST_FILE=$(find "$WORK_DIR" -name "out-*.json" -o -name "out-branch-*.json" 2>/dev/null | head -1)
+FIRST_FILE=$(find "$DATA_DIR" -name "out-*.json" -o -name "out-branch-*.json" 2>/dev/null | head -1)
 BENCH_DATE=$(stat -c %y "$FIRST_FILE" | cut -d' ' -f1)
 
 # Detect benchmark mode
@@ -98,6 +99,10 @@ if [ "$WARMUP_ITERATIONS" = "0" ]; then
 else
   BENCH_MODE="benchmark"
 fi
+
+# Create output directory and copy benchmark data files
+mkdir -p "$WORK_DIR"
+cp "$DATA_DIR"/out-*.json "$WORK_DIR/" 2>/dev/null || true
 
 # Change to working directory
 cd "$WORK_DIR"

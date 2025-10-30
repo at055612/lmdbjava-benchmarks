@@ -17,14 +17,15 @@
 
 set -euo pipefail
 
-# Set working directory
+# Set data directory (input from run-libs.sh) and output directory
+DATA_DIR="target/benchmark-libs"
 WORK_DIR="target/benchmark"
 
 # Check prerequisites
 echo "Checking for required files..."
 for i in {1..6}; do
-  if [ ! -f "$WORK_DIR/out-libs-${i}.json" ] || [ ! -f "$WORK_DIR/out-libs-${i}.txt" ]; then
-    echo "ERROR: Missing $WORK_DIR/out-libs-${i}.json or $WORK_DIR/out-libs-${i}.txt"
+  if [ ! -f "$DATA_DIR/out-libs-${i}.json" ] || [ ! -f "$DATA_DIR/out-libs-${i}.txt" ]; then
+    echo "ERROR: Missing $DATA_DIR/out-libs-${i}.json or $DATA_DIR/out-libs-${i}.txt"
     echo "Please run ./run-libs.sh first to generate benchmark results"
     exit 1
   fi
@@ -110,15 +111,20 @@ XODUS_VERSION=$(get_version "xodus.version")
 CHRONICLE_VERSION=$(get_version "chronicle-map.version")
 
 # Get benchmark date (before cd)
-BENCH_DATE=$(stat -c %y "$WORK_DIR/out-libs-1.json" | cut -d' ' -f1)
+BENCH_DATE=$(stat -c %y "$DATA_DIR/out-libs-1.json" | cut -d' ' -f1)
 
 # Detect benchmark mode by checking warmup iterations in the JSON
-WARMUP_ITERATIONS=$(jq -r '.[0].warmupIterations' "$WORK_DIR/out-libs-1.json")
+WARMUP_ITERATIONS=$(jq -r '.[0].warmupIterations' "$DATA_DIR/out-libs-1.json")
 if [ "$WARMUP_ITERATIONS" = "0" ]; then
   BENCH_MODE="smoketest"
 else
   BENCH_MODE="benchmark"
 fi
+
+# Create output directory and copy benchmark data files
+mkdir -p "$WORK_DIR"
+cp "$DATA_DIR"/out-libs-*.json "$WORK_DIR/"
+cp "$DATA_DIR"/out-libs-*.txt "$WORK_DIR/"
 
 # Change to working directory to generate all files there
 cd "$WORK_DIR"

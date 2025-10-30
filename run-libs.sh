@@ -127,7 +127,7 @@ else
 fi
 
 # Clean and create output directory
-OUTPUT_DIR="target/benchmark"
+OUTPUT_DIR="target/benchmark-libs"
 rm -rf "$OUTPUT_DIR"
 mkdir -p "$OUTPUT_DIR"
 

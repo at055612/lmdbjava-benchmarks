@@ -1,10 +1,14 @@
-[![Maven Build](https://github.com/lmdbjava/benchmarks/workflows/Maven%20Build/badge.svg)](https://github.com/lmdbjava/benchmarks/actions)
+[![Library Benchmarks](https://github.com/lmdbjava/benchmarks/workflows/Library%20Benchmarks/badge.svg)](https://github.com/lmdbjava/benchmarks/actions)
+[![Version Benchmarks](https://github.com/lmdbjava/benchmarks/workflows/Version%20Benchmarks/badge.svg)](https://github.com/lmdbjava/benchmarks/actions)
 [![License](https://img.shields.io/hexpm/l/plug.svg?maxAge=2592000)](http://www.apache.org/licenses/LICENSE-2.0.txt)
 
 # LmdbJava Benchmarks
 
-**Just want the latest results?
-[View them here!](https://github.com/lmdbjava/benchmarks/blob/master/results/20160710/README.md)**
+**Just want the latest results?**
+
+- **Library Comparisons**: [Full Benchmark](https://libraries-benchmark.lmdbjava.org) | [Smoketest](https://libraries-smoketest.lmdbjava.org)
+- **Version Regressions**: [Full Benchmark](https://versions-benchmark.lmdbjava.org) | [Smoketest](https://versions-smoketest.lmdbjava.org)
+- **Historical**: [2016 Results](https://github.com/lmdbjava/benchmarks/blob/master/results/20160710/README.md)
 
 This is a [JMH](http://openjdk.java.net/projects/code-tools/jmh/) benchmark
 of open source, embedded, memory-mapped, key-value stores available from Java:
@@ -97,6 +101,20 @@ Use the `run-vers.sh` script to test LmdbJava performance across versions:
 
 This tests selected LmdbJava versions from Maven Central plus current development branches to identify performance regressions.
 
+#### Running Both Benchmark Suites
+
+Use the `run-both.sh` script to run both library and version benchmarks sequentially (designed for overnight runs):
+
+```bash
+# Run both benchmarks using 25% of system RAM (default)
+./run-both.sh
+
+# Run both benchmarks using 50% of system RAM
+./run-both.sh 50
+```
+
+This will run library comparison benchmarks followed by version regression benchmarks, both in full benchmark mode with 120s iterations. Expect several hours of runtime depending on your system.
+
 ### Generating Reports
 
 After running library comparison benchmarks, generate a comprehensive report:
@@ -115,6 +133,32 @@ Reports generate:
 - `target/benchmark/README.md` - Full markdown report with charts
 - `target/benchmark/index.html` - HTML viewer with embedded charts (open in browser)
 - Various SVG charts and supporting files
+
+### Publishing Reports
+
+After generating a report, you can publish it to Cloudflare Pages:
+
+```bash
+export CLOUDFLARE_API_TOKEN="your-token"
+export CLOUDFLARE_ACCOUNT_ID="your-account-id"
+./publish-results.sh
+```
+
+The script automatically detects:
+- **Type**: Library comparison or version regression (from README heading)
+- **Mode**: Smoketest (3s) or benchmark (120s) (from smoketest warning)
+
+Reports are published to:
+- [libraries-smoketest.lmdbjava.org](https://libraries-smoketest.lmdbjava.org) - Fast daily library verification
+- [libraries-benchmark.lmdbjava.org](https://libraries-benchmark.lmdbjava.org) - Full library comparison analysis
+- [versions-smoketest.lmdbjava.org](https://versions-smoketest.lmdbjava.org) - Fast daily version monitoring
+- [versions-benchmark.lmdbjava.org](https://versions-benchmark.lmdbjava.org) - Full version regression analysis
+
+**Workflow for curated reports:**
+1. Run full benchmarks: `./run-both.sh` (or individually with `./run-libs.sh benchmark` and `./run-vers.sh benchmark`)
+2. Generate reports: `./report-libs.sh` and `./report-vers.sh`
+3. Review and edit commentary in report scripts if needed, then re-run
+4. Publish: `./publish-results.sh` (run twice, once after each report generation)
 
 ## Version Management
 
