@@ -29,7 +29,7 @@ jobs:
       run: sudo apt-get update && sudo apt-get install -y gnuplot
 
     - name: Run smoketest benchmarks
-      run: ./run.sh smoketest
+      run: ./run-libs.sh smoketest
 
     - name: Generate benchmark report
       run: ./report.sh

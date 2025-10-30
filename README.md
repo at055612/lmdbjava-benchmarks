@@ -61,20 +61,22 @@ wrappers exists. Operation on non-Linux operating systems is unsupported.
 
 ### Running Benchmarks
 
-Use the provided `run.sh` script to execute benchmarks:
+#### Library Comparison Benchmarks
+
+Use the `run-libs.sh` script to compare different key-value store libraries:
 
 ```bash
 # Quick smoke test (1K entries, fast verification)
-./run.sh smoketest
+./run-libs.sh smoketest
 
 # Full benchmark using 25% of system RAM (default)
-./run.sh benchmark
+./run-libs.sh benchmark
 
 # Full benchmark using 50% of system RAM
-./run.sh benchmark 50
+./run-libs.sh benchmark 50
 
 # Full benchmark using 100% of system RAM
-./run.sh benchmark 100
+./run-libs.sh benchmark 100
 ```
 
 The benchmark auto-scales based on available RAM and caps at 1 million entries.
@@ -83,13 +85,17 @@ along with human-readable logs in `target/benchmark/out-1.txt` through `target/b
 
 ### Generating Reports
 
-After running benchmarks, generate a comprehensive report with charts:
+After running library comparison benchmarks, generate a comprehensive report:
 
 ```bash
-./report.sh
+./report-libs.sh
 ```
 
-This generates:
+```bash
+./report-vers.sh
+```
+
+Reports generate:
 - `target/benchmark/README.md` - Full markdown report with charts
 - `target/benchmark/index.html` - HTML viewer with embedded charts (open in browser)
 - Various SVG charts and supporting files

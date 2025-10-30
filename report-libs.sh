@@ -1,4 +1,20 @@
 #!/bin/bash
+#
+# Copyright © 2016-2025 The LmdbJava Open Source Project
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 set -euo pipefail
 
 # Set working directory
@@ -49,7 +65,7 @@ get_cpu_count() {
   grep -c "^processor" /proc/cpuinfo
 }
 
-get_total_ram_gb() {
+get_total_ram_gib() {
   awk '/MemTotal/ {printf "%.0f", $2/1024/1024}' /proc/meminfo
 }
 
@@ -71,7 +87,7 @@ check_tmpfs() {
 
 CPU_MODEL=$(get_cpu_info)
 CPU_COUNT=$(get_cpu_count)
-RAM_GB=$(get_total_ram_gb)
+RAM_GIB=$(get_total_ram_gib)
 KERNEL=$(get_kernel)
 JAVA_VERSION=$(get_java_version)
 TMP_FS=$(check_tmpfs)
@@ -115,7 +131,7 @@ echo ""
 
 echo "System Information:"
 echo "  CPU: $CPU_MODEL (${CPU_COUNT} cores)"
-echo "  RAM: ${RAM_GB} GB"
+echo "  RAM: ${RAM_GIB} GiB"
 echo "  Kernel: Linux $KERNEL"
 echo "  Java: $JAVA_VERSION"
 echo "  /tmp filesystem: $TMP_FS"
@@ -189,7 +205,7 @@ following configuration:
 | Component | Details |
 | :-------- | :------ |
 | CPU | ${CPU_MODEL} (${CPU_COUNT} cores) |
-| RAM | ${RAM_GB} GB |
+| RAM | ${RAM_GIB} GiB |
 | OS | Linux ${KERNEL} (x86_64) |
 | Java | ${JAVA_VERSION} |
 | JMH | ${JMH_VERSION} |
