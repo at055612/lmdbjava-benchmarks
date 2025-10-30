@@ -44,9 +44,9 @@ BRANCH_VERSIONS=(master)
 
 case $MODE in
   smoketest)
-    # Fixed small dataset for verification
-    ITER_OPTS="-wi 1 -i 1 -f 1"
-    R_OPTS="-r 5s"
+    # Fixed small dataset for verification (fast, no warmup)
+    ITER_OPTS="-wi 0 -i 1 -f 1"
+    R_OPTS="-r 3s"
     NUM_ENTRIES=1000
     echo "Running in SMOKETEST mode (1K entries, fast verification)"
     ;;

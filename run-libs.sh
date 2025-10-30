@@ -40,9 +40,9 @@ echo "Detected RAM: ${TOTAL_RAM_GB} GB"
 
 case $MODE in
   smoketest)
-    # Fixed small dataset for verification
-    ITER_OPTS="-wi 1 -i 1 -f 1"
-    R_OPTS="-r 5s"
+    # Fixed small dataset for verification (fast, no warmup)
+    ITER_OPTS="-wi 0 -i 1 -f 1"
+    R_OPTS="-r 3s"
 
     # Fixed 1K entries for all runs
     NUM_RUN1=1000
@@ -56,7 +56,7 @@ case $MODE in
     ;;
 
   benchmark)
-    # Production benchmark with RAM-based scaling
+    # Production benchmark with RAM-based scaling and full warmup
     ITER_OPTS="-wi 3 -i 3 -f 3"
     R_OPTS="-r 120s"
 
@@ -121,7 +121,7 @@ esac
 
 # Single-shot benchmarks settings (align with main benchmark mode)
 if [ "$MODE" = "smoketest" ]; then
-  SS_OPTS="-bm ss -wi 1 -i 1 -f 1"
+  SS_OPTS="-bm ss -wi 0 -i 1 -f 1"
 else
   SS_OPTS="-bm ss -wi 3 -i 3 -f 3"
 fi
