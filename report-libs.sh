@@ -1539,7 +1539,7 @@ python3 -m http.server 8000</pre>
         </div>
       `;
     } else {
-      fetch('README.md')
+      fetch('README.md?hash=CACHE_BUST_HASH')
         .then(response => {
           if (!response.ok) throw new Error('Failed to load README.md');
           return response.text();
@@ -1562,7 +1562,12 @@ python3 -m http.server 8000</pre>
 </html>
 HTML
 
+# Calculate SHA256 hash of README.md and inject into index.html
+README_HASH=$(sha256sum README.md | cut -d' ' -f1)
+sed -i "s/CACHE_BUST_HASH/${README_HASH}/" index.html
+
 echo "  Generated index.html"
+echo "  README.md hash: ${README_HASH}"
 
 echo ""
 echo "Report generation complete!"
