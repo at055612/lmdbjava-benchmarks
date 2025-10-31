@@ -218,9 +218,8 @@ following configuration:
 | Temp Directory | /tmp (${TMP_FS}) |
 
 All benchmarks were executed by [JMH](http://openjdk.java.net/projects/code-tools/jmh/)
-with standard JVM fork creation and default JVM arguments. No custom garbage
-collection parameters were used. The \`/tmp\` directory was used as the work
-directory during each benchmark.
+with default operating system and JVM configuration. The \`/tmp\` directory was
+used as the work directory during each benchmark.
 
 ## Benchmark Operations
 
