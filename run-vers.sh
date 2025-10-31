@@ -39,7 +39,7 @@ fi
 echo "Detected RAM: ${TOTAL_RAM_GB} GB"
 
 # LmdbJava versions to test
-MAVEN_VERSIONS=(0.8.3 0.9.1)
+MAVEN_VERSIONS=(0.0.5 0.5.0 0.8.3 0.9.1)
 BRANCH_VERSIONS=(master)
 
 case $MODE in
