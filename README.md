@@ -78,14 +78,10 @@ Use the `run-libs.sh` script to compare different key-value store libraries:
 
 # Full benchmark using 50% of system RAM
 ./run-libs.sh benchmark 50
-
-# Full benchmark using 100% of system RAM
-./run-libs.sh benchmark 100
 ```
 
 The benchmark auto-scales based on available RAM and caps at 1 million entries.
-Results are written to `target/benchmark/out-libs-1.json` through `target/benchmark/out-libs-6.json`
-along with human-readable logs in `target/benchmark/out-libs-1.txt` through `target/benchmark/out-libs-6.txt`.
+Results are written to `target/benchmark-libs/`.
 
 #### Version Regression Testing
 
@@ -97,9 +93,13 @@ Use the `run-vers.sh` script to test LmdbJava performance across versions:
 
 # Full benchmark using 25% of system RAM (default)
 ./run-vers.sh benchmark
+
+# Full benchmark using 50% of system RAM
+./run-vers.sh benchmark 50
 ```
 
 This tests selected LmdbJava versions from Maven Central plus current development branches to identify performance regressions.
+Results are written to `target/benchmark-vers/`.
 
 #### Running Both Benchmark Suites
 

@@ -370,8 +370,9 @@ cat >> README.md <<'EOF'
 EOF
 
 cat >> README.md <<EOF
-The benchmark was executed on ${BENCH_DATE} using the LmdbJava Agrona implementation
-with the following configuration:
+The benchmark was executed on ${BENCH_DATE} using
+[LmdbJava Benchmarks](https://github.com/lmdbjava/benchmarks) with the
+LmdbJava Agrona implementation and the following configuration:
 
 ### Test Environment
 
