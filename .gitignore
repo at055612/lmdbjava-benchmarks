@@ -15,3 +15,4 @@ work
 *.jfr
 pom.xml.versionsBackup
 dependency-reduced-pom.xml
+/log.txt

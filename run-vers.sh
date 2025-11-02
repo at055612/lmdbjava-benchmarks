@@ -85,9 +85,8 @@ case $MODE in
     ;;
 esac
 
-# Clean and create output directory
+# Create output directory (do not delete - allows resumption from failures)
 FINAL_OUTPUT_DIR="target/benchmark-vers"
-rm -rf "$FINAL_OUTPUT_DIR"
 mkdir -p "$FINAL_OUTPUT_DIR"
 
 # Create temporary directory for results (survives mvn clean)
@@ -114,6 +113,11 @@ update_pom_version() {
 run_benchmark() {
   local output_file=$1
   local version_label=$2
+
+  # Check if benchmark already completed
+  if [ -s "${output_file}" ]; then
+    return 0
+  fi
 
   echo "  Running benchmark: ${version_label}..."
 
