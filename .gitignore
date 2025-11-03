@@ -16,3 +16,5 @@ work
 pom.xml.versionsBackup
 dependency-reduced-pom.xml
 /log.txt
+/bisect
+*.backup

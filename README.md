@@ -83,6 +83,15 @@ Use the `run-libs.sh` script to compare different key-value store libraries:
 The benchmark auto-scales based on available RAM and caps at 1 million entries.
 Results are written to `target/benchmark-libs/`.
 
+**File handle limit:** Benchmark mode requires at least 1 million file handles for RocksDB and LevelDB LSM operations:
+
+```bash
+ulimit -n 1000000
+./run-libs.sh benchmark
+```
+
+The script will check and abort if the limit is too low.
+
 **Resumption:** The script skips completed runs by checking for existing result files. For a fresh run, remove the output directory:
 
 ```bash
@@ -183,6 +192,30 @@ Reports are published to:
 2. Generate reports: `./report-libs.sh` and `./report-vers.sh`
 3. Review and edit commentary in report scripts if needed, then re-run
 4. Publish: `./publish-results.sh` (run twice, once after each report generation)
+
+### Performance Bisection
+
+The `run-bisect.sh` script uses bisection to find the commit that introduced a performance regression:
+
+```bash
+./run-bisect.sh
+```
+
+Configure the bisection by editing variables at the top of the script:
+- `START_COMMIT`: Known good commit (full hash)
+- `END_COMMIT`: Known bad commit (full hash)
+- `BENCHMARK_NAME`: Full benchmark qualifier (eg `LmdbJavaAgrona.write`)
+- `MAX_BISECTIONS`: Maximum bisection iterations (default 10)
+
+The script:
+- Tests endpoint commits to confirm regression
+- Bisects the commit range at 50% intervals
+- Uses distance-based decision making (closer to good or bad endpoint)
+- Uses the system LMDB library (`/usr/lib/liblmdb.so`) for all tests
+- Caches built JARs and benchmark results to avoid rebuilding
+- Generates a summary report with an asterisk marking the regression commit
+
+Results are saved in `bisect/results/` with a chronologically-sorted summary report showing scores and percentage changes. To re-run with fresh benchmarks, delete `bisect/results/*.json`.
 
 ## Version Management
 
