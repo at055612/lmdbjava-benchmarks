@@ -129,6 +129,21 @@ for f in out-version-*.json out-branch-*.json; do
   VERSIONS+=("$VERSION")
 done
 
+# Assign colors to branches
+declare -A BRANCH_COLORS
+AVAILABLE_COLORS=("#0066CC" "#CC6600" "#009966" "#9933CC" "#CC0066" "#0099CC")
+COLOR_INDEX=0
+
+for v in "${VERSIONS[@]}"; do
+  if [[ "$v" == branch-* ]]; then
+    BRANCH_NAME=$(echo "$v" | sed 's/branch-\([^#]*\)#.*/\1/')
+    if [ -z "${BRANCH_COLORS[$BRANCH_NAME]:-}" ]; then
+      BRANCH_COLORS[$BRANCH_NAME]="${AVAILABLE_COLORS[$COLOR_INDEX]}"
+      ((COLOR_INDEX++))
+    fi
+  fi
+done
+
 echo "Found ${#VERSIONS[@]} versions:"
 for v in "${VERSIONS[@]}"; do
   echo "  - $v"
@@ -328,7 +343,15 @@ for BENCH in readKey write readXxh32 readSeq readRev readCrc; do
       DIFF="baseline"
     else
       PERCENT=$(awk -v score="$SCORE" -v fastest="$FASTEST_SCORE" 'BEGIN {printf "%.1f", ((score - fastest) / fastest * 100)}')
-      DIFF="+${PERCENT}%"
+
+      # Color the percentage if this is a branch version
+      if [[ "$VERSION" == branch-* ]]; then
+        BRANCH_NAME=$(echo "$VERSION" | sed 's/branch-\([^#]*\)#.*/\1/')
+        COLOR="${BRANCH_COLORS[$BRANCH_NAME]}"
+        DIFF="<span style=\"color: ${COLOR};\">+${PERCENT}%</span>"
+      else
+        DIFF="+${PERCENT}%"
+      fi
     fi
 
     # Format score to 3 decimal places
