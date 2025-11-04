@@ -30,7 +30,7 @@ import static org.openjdk.jmh.annotations.Scope.Benchmark;
 
 import java.io.IOException;
 
-import net.jpountz.xxhash.XXHash32;
+import net.jpountz.xxhash.StreamingXXHash32;
 import net.jpountz.xxhash.XXHashFactory;
 
 import jetbrains.exodus.ArrayByteIterable;
@@ -110,14 +110,14 @@ public class Xodus {
 
   @Benchmark
   public void readXxh32(final Reader r, final Blackhole bh) {
-    long result = 0;
+    r.xxh.reset();
     try (Cursor c = r.store.openCursor(r.tx)) {
       while (c.getNext()) {
-        result += r.xxh.hash(c.getKey().getBytesUnsafe(), 0, r.keySize, 0);
-        result += r.xxh.hash(c.getValue().getBytesUnsafe(), 0, r.valSize, 0);
+        r.xxh.update(c.getKey().getBytesUnsafe(), 0, r.keySize);
+        r.xxh.update(c.getValue().getBytesUnsafe(), 0, r.valSize);
       }
     }
-    bh.consume(result);
+    bh.consume(r.xxh.getValue());
   }
 
   @Benchmark
@@ -205,7 +205,7 @@ public class Xodus {
   public static class Reader extends CommonXodus {
 
     Transaction tx;
-    XXHash32 xxh;
+    StreamingXXHash32 xxh;
 
     @Setup(Trial)
     @Override
@@ -213,7 +213,7 @@ public class Xodus {
       super.setup(b);
       super.write();
       tx = env.beginReadonlyTransaction();
-      xxh = XXHashFactory.nativeInstance().hash32();
+      xxh = XXHashFactory.nativeInstance().newStreamingHash32(0);
       // cannot share Cursor, as there's no Cursor.getFirst() to reset methods
     }
 

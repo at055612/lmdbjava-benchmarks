@@ -29,7 +29,7 @@ import static org.openjdk.jmh.annotations.Scope.Benchmark;
 
 import java.io.IOException;
 
-import net.jpountz.xxhash.XXHash32;
+import net.jpountz.xxhash.StreamingXXHash32;
 import net.jpountz.xxhash.XXHashFactory;
 import java.util.Map.Entry;
 
@@ -107,15 +107,15 @@ public class LevelDb {
 
   @Benchmark
   public void readXxh32(final Reader r, final Blackhole bh) throws IOException {
-    long result = 0;
+    r.xxh.reset();
     try (DBIterator iterator = r.db.iterator()) {
       for (iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
         final Entry<byte[], byte[]> peeked = iterator.peekNext();
-        result += r.xxh.hash(peeked.getKey(), 0, peeked.getKey().length, 0);
-        result += r.xxh.hash(peeked.getValue(), 0, peeked.getValue().length, 0);
+        r.xxh.update(peeked.getKey(), 0, peeked.getKey().length);
+        r.xxh.update(peeked.getValue(), 0, peeked.getValue().length);
       }
     }
-    bh.consume(result);
+    bh.consume(r.xxh.getValue());
   }
 
   @Benchmark
@@ -195,14 +195,14 @@ public class LevelDb {
   
   public static class Reader extends CommonLevelDb {
 
-    XXHash32 xxh;
+    StreamingXXHash32 xxh;
 
     @Setup(Trial)
     @Override
     public void setup(final BenchmarkParams b) throws IOException {
       super.setup(b);
       super.write(num);
-      xxh = XXHashFactory.nativeInstance().hash32();
+      xxh = XXHashFactory.nativeInstance().newStreamingHash32(0);
     }
 
     @TearDown(Trial)

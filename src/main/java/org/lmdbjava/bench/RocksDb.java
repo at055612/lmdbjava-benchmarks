@@ -28,7 +28,7 @@ import static org.rocksdb.RocksDB.open;
 
 import java.io.IOException;
 
-import net.jpountz.xxhash.XXHash32;
+import net.jpountz.xxhash.StreamingXXHash32;
 import net.jpountz.xxhash.XXHashFactory;
 
 import org.agrona.MutableDirectBuffer;
@@ -108,15 +108,15 @@ public class RocksDb {
 
   @Benchmark
   public void readXxh32(final Reader r, final Blackhole bh) {
-    long result = 0;
+    r.xxh.reset();
     final RocksIterator iterator = r.db.newIterator();
     iterator.seekToFirst();
     while (iterator.isValid()) {
-      result += r.xxh.hash(iterator.key(), 0, iterator.key().length, 0);
-      result += r.xxh.hash(iterator.value(), 0, iterator.value().length, 0);
+      r.xxh.update(iterator.key(), 0, iterator.key().length);
+      r.xxh.update(iterator.value(), 0, iterator.value().length);
       iterator.next();
     }
-    bh.consume(result);
+    bh.consume(r.xxh.getValue());
   }
 
   @Benchmark
@@ -215,14 +215,14 @@ public class RocksDb {
   
   public static class Reader extends CommonRocksDb {
 
-    XXHash32 xxh;
+    StreamingXXHash32 xxh;
 
     @Setup(Trial)
     @Override
     public void setup(final BenchmarkParams b) throws IOException {
       super.setup(b);
       super.write(num);
-      xxh = XXHashFactory.nativeInstance().hash32();
+      xxh = XXHashFactory.nativeInstance().newStreamingHash32(0);
     }
 
     @TearDown(Trial)

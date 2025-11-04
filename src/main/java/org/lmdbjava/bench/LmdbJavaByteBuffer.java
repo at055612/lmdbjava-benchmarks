@@ -35,7 +35,7 @@ import static org.openjdk.jmh.annotations.Scope.Benchmark;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import net.jpountz.xxhash.XXHash32;
+import net.jpountz.xxhash.StreamingXXHash32;
 import net.jpountz.xxhash.XXHashFactory;
 import org.lmdbjava.Cursor;
 import org.lmdbjava.PutFlags;
@@ -105,7 +105,7 @@ public class LmdbJavaByteBuffer {
 
   @Benchmark
   public void readXxh32(final Reader r, final Blackhole bh) {
-    long result = 0;
+    r.xxh.reset();
     bh.consume(r.c.seek(MDB_FIRST));
     do {
       final ByteBuffer key = r.txn.key();
@@ -114,10 +114,10 @@ public class LmdbJavaByteBuffer {
       final int valLen = val.remaining();
       key.get(r.keyBytes, 0, keyLen);
       val.get(r.valBytes, 0, valLen);
-      result += r.xxh.hash(r.keyBytes, 0, keyLen, 0);
-      result += r.xxh.hash(r.valBytes, 0, valLen, 0);
+      r.xxh.update(r.keyBytes, 0, keyLen);
+      r.xxh.update(r.valBytes, 0, valLen);
     } while (r.c.seek(MDB_NEXT));
-    bh.consume(result);
+    bh.consume(r.xxh.getValue());
   }
 
   @Benchmark
@@ -190,7 +190,7 @@ public class LmdbJavaByteBuffer {
     byte[] keyBytes;
     Txn<ByteBuffer> txn;
     byte[] valBytes;
-    XXHash32 xxh;
+    StreamingXXHash32 xxh;
 
     @Setup(Trial)
     @Override
@@ -202,7 +202,7 @@ public class LmdbJavaByteBuffer {
       valBytes = new byte[valSize];
       txn = env.txnRead();
       c = db.openCursor(txn);
-      xxh = XXHashFactory.nativeInstance().hash32();
+      xxh = XXHashFactory.nativeInstance().newStreamingHash32(0);
     }
 
     @TearDown(Trial)

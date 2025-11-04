@@ -57,7 +57,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 
-import net.jpountz.xxhash.XXHash32;
+import net.jpountz.xxhash.StreamingXXHash32;
 import net.jpountz.xxhash.XXHashFactory;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
@@ -154,18 +154,18 @@ public class LmdbLwjgl {
       final MDBVal key = mallocStack(stack);
       final MDBVal val = mallocStack(stack);
 
-      long result = 0;
+      r.xxh.reset();
 
       int status = mdb_cursor_get(r.c, key, val, MDB_FIRST);
       while (status != MDB_NOTFOUND) {
         key.mv_data().get(r.keyBytes);
         val.mv_data().get(r.valBytes);
-        result += r.xxh.hash(r.keyBytes, 0, r.keySize, 0);
-        result += r.xxh.hash(r.valBytes, 0, r.valSize, 0);
+        r.xxh.update(r.keyBytes, 0, r.keySize);
+        r.xxh.update(r.valBytes, 0, r.valSize);
 
         status = mdb_cursor_get(r.c, key, val, MDB_NEXT);
       }
-      bh.consume(result);
+      bh.consume(r.xxh.getValue());
     }
   }
 
@@ -313,7 +313,7 @@ public class LmdbLwjgl {
     byte[] keyBytes;
     long txn;
     byte[] valBytes;
-    XXHash32 xxh;
+    StreamingXXHash32 xxh;
 
     @Setup(Trial)
     @Override
@@ -332,7 +332,7 @@ public class LmdbLwjgl {
         E(mdb_cursor_open(txn, db, pp));
         c = pp.get(0);
       }
-      xxh = XXHashFactory.nativeInstance().hash32();
+      xxh = XXHashFactory.nativeInstance().newStreamingHash32(0);
     }
 
     @TearDown(Trial)

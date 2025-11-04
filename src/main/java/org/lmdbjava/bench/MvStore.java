@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-import net.jpountz.xxhash.XXHash32;
+import net.jpountz.xxhash.StreamingXXHash32;
 import net.jpountz.xxhash.XXHashFactory;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
@@ -104,15 +104,15 @@ public class MvStore {
 
   @Benchmark
   public void readXxh32(final Reader r, final Blackhole bh) {
-    long result = 0;
+    r.xxh.reset();
     final Cursor<byte[], byte[]> cursor = r.map.cursor(null, null, false);
     while (cursor.hasNext()) {
       final byte[] k = cursor.next();
       final byte[] v = cursor.getValue();
-      result += r.xxh.hash(k, 0, k.length, 0);
-      result += r.xxh.hash(v, 0, v.length, 0);
+      r.xxh.update(k, 0, k.length);
+      r.xxh.update(v, 0, v.length);
     }
-    bh.consume(result);
+    bh.consume(r.xxh.getValue());
   }
 
   @Benchmark
@@ -190,14 +190,14 @@ public class MvStore {
   
   public static class Reader extends CommonMvStore {
 
-    XXHash32 xxh;
+    StreamingXXHash32 xxh;
 
     @Setup(Trial)
     @Override
     public void setup(final BenchmarkParams b) throws IOException {
       super.setup(b);
       super.write();
-      xxh = XXHashFactory.nativeInstance().hash32();
+      xxh = XXHashFactory.nativeInstance().newStreamingHash32(0);
     }
 
     @TearDown(Trial)

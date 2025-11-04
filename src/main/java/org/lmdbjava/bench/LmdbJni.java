@@ -33,7 +33,7 @@ import static org.openjdk.jmh.annotations.Scope.Benchmark;
 
 import java.io.IOException;
 
-import net.jpountz.xxhash.XXHash32;
+import net.jpountz.xxhash.StreamingXXHash32;
 import net.jpountz.xxhash.XXHashFactory;
 import org.fusesource.lmdbjni.BufferCursor;
 import org.fusesource.lmdbjni.Database;
@@ -108,15 +108,15 @@ public class LmdbJni {
 
   @Benchmark
   public void readXxh32(final Reader r, final Blackhole bh) {
-    long result = 0;
+    r.xxh.reset();
     bh.consume(r.c.first());
     do {
       r.c.keyBuffer().getBytes(0, r.keyBytes, 0, r.keySize);
       r.c.valBuffer().getBytes(0, r.valBytes, 0, r.valSize);
-      result += r.xxh.hash(r.keyBytes, 0, r.keySize, 0);
-      result += r.xxh.hash(r.valBytes, 0, r.valSize, 0);
+      r.xxh.update(r.keyBytes, 0, r.keySize);
+      r.xxh.update(r.valBytes, 0, r.valSize);
     } while (r.c.next());
-    bh.consume(result);
+    bh.consume(r.xxh.getValue());
   }
 
   @Benchmark
@@ -231,7 +231,7 @@ public class LmdbJni {
 
     BufferCursor c;
     Transaction tx;
-    XXHash32 xxh;
+    StreamingXXHash32 xxh;
 
     @Setup(Trial)
     @Override
@@ -240,7 +240,7 @@ public class LmdbJni {
       super.write();
       tx = env.createReadTransaction();
       c = db.bufferCursor(tx);
-      xxh = XXHashFactory.nativeInstance().hash32();
+      xxh = XXHashFactory.nativeInstance().newStreamingHash32(0);
     }
 
     @TearDown(Trial)
