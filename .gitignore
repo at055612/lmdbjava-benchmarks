@@ -17,4 +17,5 @@ pom.xml.versionsBackup
 dependency-reduced-pom.xml
 /log.txt
 /bisect
+/dev
 *.backup

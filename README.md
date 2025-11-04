@@ -217,6 +217,26 @@ The script:
 
 Results are saved in `bisect/results/` with a chronologically-sorted summary report showing scores and percentage changes. To re-run with fresh benchmarks, delete `bisect/results/*.json`.
 
+### Development Testing
+
+The `run-dev.sh` script enables rapid testing of local LmdbJava changes without full bisection overhead:
+
+```bash
+./run-dev.sh
+```
+
+This script:
+- Builds LmdbJava from `dev/lmdbjava/` (clone or symlink your working copy here)
+- Patches the benchmark pom.xml to use the local SNAPSHOT version
+- Runs a quick benchmark (10K entries, 3s runtime by default)
+- Saves results to `dev/output/` with commit hash and timestamp
+
+To match full bisection configuration, edit the script and change:
+- `JMH_RUNTIME=30` (30 second iterations)
+- `NUM_ENTRIES=1000000` (1 million entries)
+
+Use this for iterative development and verification of performance fixes before committing.
+
 ## Version Management
 
 Update all dependency and plugin versions:
