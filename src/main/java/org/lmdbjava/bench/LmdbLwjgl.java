@@ -47,7 +47,7 @@ import static org.lwjgl.util.lmdb.LMDB.mdb_strerror;
 import static org.lwjgl.util.lmdb.LMDB.mdb_txn_abort;
 import static org.lwjgl.util.lmdb.LMDB.mdb_txn_begin;
 import static org.lwjgl.util.lmdb.LMDB.mdb_txn_commit;
-import static org.lwjgl.util.lmdb.MDBVal.mallocStack;
+import static org.lwjgl.util.lmdb.MDBVal.malloc;
 import static org.openjdk.jmh.annotations.Level.Invocation;
 import static org.openjdk.jmh.annotations.Level.Trial;
 import static org.openjdk.jmh.annotations.Mode.SampleTime;
@@ -85,8 +85,8 @@ public class LmdbLwjgl {
   @Benchmark
   public void readCrc(final Reader r, final Blackhole bh) {
     try (MemoryStack stack = stackPush()) {
-      final MDBVal rwKey = mallocStack(stack);
-      final MDBVal rwVal = mallocStack(stack);
+      final MDBVal rwKey = malloc(stack);
+      final MDBVal rwVal = malloc(stack);
 
       r.crc.reset();
       int status = mdb_cursor_get(r.c, rwKey, rwVal, MDB_FIRST);
@@ -102,8 +102,8 @@ public class LmdbLwjgl {
   @Benchmark
   public void readKey(final Reader r, final Blackhole bh) {
     try (MemoryStack stack = stackPush()) {
-      final MDBVal rwKey = mallocStack(stack);
-      final MDBVal rwVal = mallocStack(stack);
+      final MDBVal rwKey = malloc(stack);
+      final MDBVal rwVal = malloc(stack);
 
       for (final int key : r.keys) {
         stack.push();
@@ -122,8 +122,8 @@ public class LmdbLwjgl {
   @Benchmark
   public void readRev(final Reader r, final Blackhole bh) {
     try (MemoryStack stack = stackPush()) {
-      final MDBVal key = mallocStack(stack);
-      final MDBVal val = mallocStack(stack);
+      final MDBVal key = malloc(stack);
+      final MDBVal val = malloc(stack);
 
       int status = mdb_cursor_get(r.c, key, val, MDB_LAST);
       while (status != MDB_NOTFOUND) {
@@ -137,8 +137,8 @@ public class LmdbLwjgl {
   @Benchmark
   public void readSeq(final Reader r, final Blackhole bh) {
     try (MemoryStack stack = stackPush()) {
-      final MDBVal key = mallocStack(stack);
-      final MDBVal val = mallocStack(stack);
+      final MDBVal key = malloc(stack);
+      final MDBVal val = malloc(stack);
 
       int status = mdb_cursor_get(r.c, key, val, MDB_FIRST);
       while (status != MDB_NOTFOUND) {
@@ -151,8 +151,8 @@ public class LmdbLwjgl {
   @Benchmark
   public void readXxh32(final Reader r, final Blackhole bh) {
     try (MemoryStack stack = stackPush()) {
-      final MDBVal key = mallocStack(stack);
-      final MDBVal val = mallocStack(stack);
+      final MDBVal key = malloc(stack);
+      final MDBVal val = malloc(stack);
 
       r.xxh.reset();
 
@@ -261,8 +261,8 @@ public class LmdbLwjgl {
       try (MemoryStack stack = stackPush()) {
         final PointerBuffer pp = stack.mallocPointer(1);
 
-        final MDBVal rwKey = mallocStack(stack);
-        final MDBVal rwVal = mallocStack(stack);
+        final MDBVal rwKey = malloc(stack);
+        final MDBVal rwVal = malloc(stack);
 
         E(mdb_txn_begin(env, NULL, 0, pp));
         final long tx = pp.get(0);
