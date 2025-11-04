@@ -89,7 +89,7 @@ KERNEL=$(get_kernel)
 JAVA_VERSION=$(get_java_version)
 
 # Get benchmark date from first available file
-FIRST_FILE=$(find "$DATA_DIR" -name "out-*.json" -o -name "out-branch-*.json" 2>/dev/null | head -1)
+FIRST_FILE=$(find "$DATA_DIR" \( -name "out-version-*.json" -o -name "out-branch-*.json" \) 2>/dev/null | head -1)
 BENCH_DATE=$(stat -c %y "$FIRST_FILE" | cut -d' ' -f1)
 
 # Detect benchmark mode
@@ -127,21 +127,6 @@ for f in out-version-*.json out-branch-*.json; do
   # Extract version/branch from filename (strip out-version- or out-branch- prefix and .json suffix)
   VERSION=$(echo "$f" | sed 's/out-version-\(.*\)\.json/\1/' | sed 's/out-branch-\(.*\)\.json/branch-\1/')
   VERSIONS+=("$VERSION")
-done
-
-# Assign colors to branches
-declare -A BRANCH_COLORS
-AVAILABLE_COLORS=("#0066CC" "#CC6600" "#009966" "#9933CC" "#CC0066" "#0099CC")
-COLOR_INDEX=0
-
-for v in "${VERSIONS[@]}"; do
-  if [[ "$v" == branch-* ]]; then
-    BRANCH_NAME=$(echo "$v" | sed 's/branch-\([^#]*\)#.*/\1/')
-    if [ -z "${BRANCH_COLORS[$BRANCH_NAME]:-}" ]; then
-      BRANCH_COLORS[$BRANCH_NAME]="${AVAILABLE_COLORS[$COLOR_INDEX]}"
-      ((COLOR_INDEX++))
-    fi
-  fi
 done
 
 echo "Found ${#VERSIONS[@]} versions:"
@@ -338,17 +323,20 @@ for BENCH in readKey write readXxh32 readSeq readRev readCrc; do
       VERSION_DISPLAY="$VERSION"
     fi
 
-    # Calculate percentage difference
+    # Calculate percentage difference and format display
     if [ "$RANK" -eq 1 ]; then
-      DIFF="baseline"
+      # Bold "baseline" if this is a branch version
+      if [[ "$VERSION" == branch-* ]]; then
+        DIFF="**baseline**"
+      else
+        DIFF="baseline"
+      fi
     else
       PERCENT=$(awk -v score="$SCORE" -v fastest="$FASTEST_SCORE" 'BEGIN {printf "%.1f", ((score - fastest) / fastest * 100)}')
 
-      # Color the percentage if this is a branch version
+      # Bold the percentage for branch versions to distinguish them
       if [[ "$VERSION" == branch-* ]]; then
-        BRANCH_NAME=$(echo "$VERSION" | sed 's/branch-\([^#]*\)#.*/\1/')
-        COLOR="${BRANCH_COLORS[$BRANCH_NAME]}"
-        DIFF="<span style=\"color: ${COLOR};\">+${PERCENT}%</span>"
+        DIFF="**+${PERCENT}%**"
       else
         DIFF="+${PERCENT}%"
       fi
