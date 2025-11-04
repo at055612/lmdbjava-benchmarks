@@ -54,7 +54,7 @@ import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.Blackhole;
 
 @OutputTimeUnit(MILLISECONDS)
-@Fork(1)
+@Fork(value = 1, jvmArgsAppend = "-Dlmdbjava.disable.checks=true")
 @Warmup(iterations = 3)
 @Measurement(iterations = 3)
 @BenchmarkMode(SampleTime)
