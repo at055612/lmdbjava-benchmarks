@@ -100,11 +100,11 @@ case $MODE in
     ;;
 esac
 
-# Create output directory (do not delete - allows resumption from failures)
-FINAL_OUTPUT_DIR="target/benchmark-lmdb"
+# Create output directory outside target/ (survives mvn clean)
+FINAL_OUTPUT_DIR="lmdb/results"
 mkdir -p "$FINAL_OUTPUT_DIR"
 
-# Create temporary directory for results (survives mvn clean)
+# Create temporary directory for results
 TEMP_OUTPUT_DIR=$(mktemp -d)
 echo "Using temporary directory: ${TEMP_OUTPUT_DIR}"
 
