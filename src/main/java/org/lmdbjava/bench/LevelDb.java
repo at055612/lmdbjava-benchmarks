@@ -29,7 +29,7 @@ import static org.openjdk.jmh.annotations.Scope.Benchmark;
 
 import java.io.IOException;
 
-import net.jpountz.xxhash.StreamingXXHash32;
+import net.jpountz.xxhash.StreamingXXHash64;
 import net.jpountz.xxhash.XXHashFactory;
 import java.util.Map.Entry;
 
@@ -106,7 +106,7 @@ public class LevelDb {
   }
 
   @Benchmark
-  public void readXxh32(final Reader r, final Blackhole bh) throws IOException {
+  public void readXxh64(final Reader r, final Blackhole bh) throws IOException {
     r.xxh.reset();
     try (DBIterator iterator = r.db.iterator()) {
       for (iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
@@ -195,14 +195,14 @@ public class LevelDb {
   
   public static class Reader extends CommonLevelDb {
 
-    StreamingXXHash32 xxh;
+    StreamingXXHash64 xxh;
 
     @Setup(Trial)
     @Override
     public void setup(final BenchmarkParams b) throws IOException {
       super.setup(b);
       super.write(num);
-      xxh = XXHashFactory.nativeInstance().newStreamingHash32(0);
+      xxh = XXHashFactory.fastestJavaInstance().newStreamingHash64(0);
     }
 
     @TearDown(Trial)

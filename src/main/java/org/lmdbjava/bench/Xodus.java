@@ -30,7 +30,7 @@ import static org.openjdk.jmh.annotations.Scope.Benchmark;
 
 import java.io.IOException;
 
-import net.jpountz.xxhash.StreamingXXHash32;
+import net.jpountz.xxhash.StreamingXXHash64;
 import net.jpountz.xxhash.XXHashFactory;
 
 import jetbrains.exodus.ArrayByteIterable;
@@ -109,7 +109,7 @@ public class Xodus {
   }
 
   @Benchmark
-  public void readXxh32(final Reader r, final Blackhole bh) {
+  public void readXxh64(final Reader r, final Blackhole bh) {
     r.xxh.reset();
     try (Cursor c = r.store.openCursor(r.tx)) {
       while (c.getNext()) {
@@ -205,7 +205,7 @@ public class Xodus {
   public static class Reader extends CommonXodus {
 
     Transaction tx;
-    StreamingXXHash32 xxh;
+    StreamingXXHash64 xxh;
 
     @Setup(Trial)
     @Override
@@ -213,7 +213,7 @@ public class Xodus {
       super.setup(b);
       super.write();
       tx = env.beginReadonlyTransaction();
-      xxh = XXHashFactory.nativeInstance().newStreamingHash32(0);
+      xxh = XXHashFactory.fastestJavaInstance().newStreamingHash64(0);
       // cannot share Cursor, as there's no Cursor.getFirst() to reset methods
     }
 

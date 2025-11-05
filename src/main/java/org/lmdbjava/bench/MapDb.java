@@ -28,7 +28,7 @@ import static org.openjdk.jmh.annotations.Scope.Benchmark;
 import java.io.File;
 import java.io.IOException;
 
-import net.jpountz.xxhash.StreamingXXHash32;
+import net.jpountz.xxhash.StreamingXXHash64;
 import net.jpountz.xxhash.XXHashFactory;
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -101,7 +101,7 @@ public class MapDb {
   }
 
   @Benchmark
-  public void readXxh32(final Reader r, final Blackhole bh) {
+  public void readXxh64(final Reader r, final Blackhole bh) {
     r.xxh.reset();
     final Iterator<Entry<byte[], byte[]>> iterator = r.map.entryIterator();
     while (iterator.hasNext()) {
@@ -184,14 +184,14 @@ public class MapDb {
   
   public static class Reader extends CommonMapDb {
 
-    StreamingXXHash32 xxh;
+    StreamingXXHash64 xxh;
 
     @Setup(Trial)
     @Override
     public void setup(final BenchmarkParams b) throws IOException {
       super.setup(b);
       super.write();
-      xxh = XXHashFactory.nativeInstance().newStreamingHash32(0);
+      xxh = XXHashFactory.fastestJavaInstance().newStreamingHash64(0);
     }
 
     @TearDown(Trial)

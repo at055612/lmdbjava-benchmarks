@@ -57,7 +57,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 
-import net.jpountz.xxhash.StreamingXXHash32;
+import net.jpountz.xxhash.StreamingXXHash64;
 import net.jpountz.xxhash.XXHashFactory;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
@@ -149,7 +149,7 @@ public class LmdbLwjgl {
   }
 
   @Benchmark
-  public void readXxh32(final Reader r, final Blackhole bh) {
+  public void readXxh64(final Reader r, final Blackhole bh) {
     try (MemoryStack stack = stackPush()) {
       final MDBVal key = malloc(stack);
       final MDBVal val = malloc(stack);
@@ -313,7 +313,7 @@ public class LmdbLwjgl {
     byte[] keyBytes;
     long txn;
     byte[] valBytes;
-    StreamingXXHash32 xxh;
+    StreamingXXHash64 xxh;
 
     @Setup(Trial)
     @Override
@@ -332,7 +332,7 @@ public class LmdbLwjgl {
         E(mdb_cursor_open(txn, db, pp));
         c = pp.get(0);
       }
-      xxh = XXHashFactory.nativeInstance().newStreamingHash32(0);
+      xxh = XXHashFactory.fastestJavaInstance().newStreamingHash64(0);
     }
 
     @TearDown(Trial)

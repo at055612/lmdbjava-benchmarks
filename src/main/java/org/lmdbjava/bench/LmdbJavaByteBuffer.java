@@ -35,7 +35,7 @@ import static org.openjdk.jmh.annotations.Scope.Benchmark;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import net.jpountz.xxhash.StreamingXXHash32;
+import net.jpountz.xxhash.StreamingXXHash64;
 import net.jpountz.xxhash.XXHashFactory;
 import org.lmdbjava.Cursor;
 import org.lmdbjava.PutFlags;
@@ -104,7 +104,7 @@ public class LmdbJavaByteBuffer {
   }
 
   @Benchmark
-  public void readXxh32(final Reader r, final Blackhole bh) {
+  public void readXxh64(final Reader r, final Blackhole bh) {
     r.xxh.reset();
     bh.consume(r.c.seek(MDB_FIRST));
     do {
@@ -190,7 +190,7 @@ public class LmdbJavaByteBuffer {
     byte[] keyBytes;
     Txn<ByteBuffer> txn;
     byte[] valBytes;
-    StreamingXXHash32 xxh;
+    StreamingXXHash64 xxh;
 
     @Setup(Trial)
     @Override
@@ -202,7 +202,7 @@ public class LmdbJavaByteBuffer {
       valBytes = new byte[valSize];
       txn = env.txnRead();
       c = db.openCursor(txn);
-      xxh = XXHashFactory.nativeInstance().newStreamingHash32(0);
+      xxh = XXHashFactory.fastestJavaInstance().newStreamingHash64(0);
     }
 
     @TearDown(Trial)

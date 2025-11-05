@@ -164,11 +164,11 @@ COLORS[readCrc]="#e41a1c"
 COLORS[readKey]="#984ea3"
 COLORS[readRev]="#ffff33"
 COLORS[readSeq]="#377eb8"
-COLORS[readXxh32]="#4daf4a"
+COLORS[readXxh64]="#4daf4a"
 COLORS[write]="#ff7f00"
 
 # Extract data for each benchmark operation across all versions
-for BENCH in readCrc readKey readRev readSeq readXxh32 write; do
+for BENCH in readCrc readKey readRev readSeq readXxh64 write; do
   echo "Processing benchmark: ${BENCH}..."
 
   # Extract scores for this benchmark across all versions
@@ -230,9 +230,9 @@ set title "Write Entry"
 set style fill solid 0.25 border
 plot 'vers-write.dat' using 2:xtic(1) with boxes lc rgb "#ff7f00" notitle
 
-set title "Calculate xxHash32"
+set title "Calculate xxHash64"
 set style fill solid 0.25 border
-plot 'vers-readXxh32.dat' using 2:xtic(1) with boxes lc rgb "#4daf4a" notitle
+plot 'vers-readXxh64.dat' using 2:xtic(1) with boxes lc rgb "#4daf4a" notitle
 
 set title "Iterate Sequentially"
 set style fill solid 0.25 border
@@ -269,12 +269,12 @@ EOF
 declare -A BENCH_NAMES
 BENCH_NAMES[readKey]="Read by Key"
 BENCH_NAMES[write]="Write Entry"
-BENCH_NAMES[readXxh32]="Calculate xxHash32"
+BENCH_NAMES[readXxh64]="Calculate xxHash64"
 BENCH_NAMES[readSeq]="Iterate Sequentially"
 BENCH_NAMES[readRev]="Iterate Reverse"
 BENCH_NAMES[readCrc]="Calculate CRC32"
 
-for BENCH in readKey write readXxh32 readSeq readRev readCrc; do
+for BENCH in readKey write readXxh64 readSeq readRev readCrc; do
   echo "### ${BENCH_NAMES[$BENCH]}" >> README.md
   echo "" >> README.md
   echo "| Rank | Version | ms/op | vs Fastest |" >> README.md
@@ -401,7 +401,7 @@ LmdbJava Agrona implementation and the following configuration:
 - **Key Type**: Sequential 32-bit integers
 - **Value Size**: 100 bytes
 - **Access Pattern**: Sequential
-- **Benchmarks**: All 6 operations (readCrc, readKey, readRev, readSeq, readXxh32, write)
+- **Benchmarks**: All 6 operations (readCrc, readKey, readRev, readSeq, readXxh64, write)
 
 EOF
 

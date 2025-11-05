@@ -33,7 +33,7 @@ import static org.openjdk.jmh.annotations.Scope.Benchmark;
 
 import java.io.IOException;
 
-import net.jpountz.xxhash.StreamingXXHash32;
+import net.jpountz.xxhash.StreamingXXHash64;
 import net.jpountz.xxhash.XXHashFactory;
 import org.fusesource.lmdbjni.BufferCursor;
 import org.fusesource.lmdbjni.Database;
@@ -107,7 +107,7 @@ public class LmdbJni {
   }
 
   @Benchmark
-  public void readXxh32(final Reader r, final Blackhole bh) {
+  public void readXxh64(final Reader r, final Blackhole bh) {
     r.xxh.reset();
     bh.consume(r.c.first());
     do {
@@ -231,7 +231,7 @@ public class LmdbJni {
 
     BufferCursor c;
     Transaction tx;
-    StreamingXXHash32 xxh;
+    StreamingXXHash64 xxh;
 
     @Setup(Trial)
     @Override
@@ -240,7 +240,7 @@ public class LmdbJni {
       super.write();
       tx = env.createReadTransaction();
       c = db.bufferCursor(tx);
-      xxh = XXHashFactory.nativeInstance().newStreamingHash32(0);
+      xxh = XXHashFactory.fastestJavaInstance().newStreamingHash64(0);
     }
 
     @TearDown(Trial)

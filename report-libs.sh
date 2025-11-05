@@ -227,7 +227,7 @@ The following operations are measured:
 
 * 🟣 \`readKey\`: Fetch each entry by presenting its key
 * 🟠 \`write\`: Bulk insert entries into the store
-* 🟢 \`readXxh32\`: Iterate over entries computing XXH32 hash of keys and values
+* 🟢 \`readXxh64\`: Iterate over entries computing XXH64 hash of keys and values
 * 🔵 \`readSeq\`: Iterate over key-ordered entries in forward order
 * 🟡 \`readRev\`: Iterate over key-ordered entries in reverse order
 * 🔴 \`readCrc\`: Iterate over entries computing CRC32 of keys and values
@@ -264,7 +264,7 @@ awk '{
   else if (bench ~ /^readKey-/) color = "0x984ea3";
   else if (bench ~ /^readRev-/) color = "0xffff33";
   else if (bench ~ /^readSeq-/) color = "0x377eb8";
-  else if (bench ~ /^readXxh32-/) color = "0x4daf4a";
+  else if (bench ~ /^readXxh64-/) color = "0x4daf4a";
   else color = "0x000000";
   print bench, value, color;
 }' 1-forceSafe-reads.dat > 1-forceSafe-colored.dat
@@ -606,7 +606,7 @@ jq -r '.[] | select(.params.intKey == "true") |
   "true \"\($bench).\($impl)\" true \(.primaryMetric.score)"' out-libs-4.json > 4-intKey-seq-all.dat
 
 # Split by benchmark type and remove benchmark prefix from labels
-for BENCH in readCrc readKey readRev readSeq readXxh32 write; do
+for BENCH in readCrc readKey readRev readSeq readXxh64 write; do
   grep "\"${BENCH}\." 4-intKey-seq-all.dat | sed "s/\"${BENCH}\./\"/g" > 4-intKey-seq-${BENCH}.dat
 done
 
@@ -632,9 +632,9 @@ set title "Write Entry"
 set style fill solid 0.25 border
 plot '4-intKey-seq-write.dat' using 4:xtic(2) with boxes lc rgb "#ff7f00" notitle
 
-set title "Calculate xxHash32"
+set title "Calculate xxHash64"
 set style fill solid 0.25 border
-plot '4-intKey-seq-readXxh32.dat' using 4:xtic(2) with boxes lc rgb "#4daf4a" notitle
+plot '4-intKey-seq-readXxh64.dat' using 4:xtic(2) with boxes lc rgb "#4daf4a" notitle
 
 set title "Iterate Sequentially"
 set style fill solid 0.25 border
@@ -675,7 +675,7 @@ jq -r '.[] | select(.params.intKey == "false") |
   "false \"\($bench).\($impl)\" true \(.primaryMetric.score)"' out-libs-4.json > 4-strKey-seq-all.dat
 
 # Split by benchmark type and remove benchmark prefix from labels
-for BENCH in readCrc readKey readRev readSeq readXxh32 write; do
+for BENCH in readCrc readKey readRev readSeq readXxh64 write; do
   grep "\"${BENCH}\." 4-strKey-seq-all.dat | sed "s/\"${BENCH}\./\"/g" > 4-strKey-seq-${BENCH}.dat
 done
 
@@ -701,9 +701,9 @@ set title "Write Entry"
 set style fill solid 0.25 border
 plot '4-strKey-seq-write.dat' using 4:xtic(2) with boxes lc rgb "#ff7f00" notitle
 
-set title "Calculate xxHash32"
+set title "Calculate xxHash64"
 set style fill solid 0.25 border
-plot '4-strKey-seq-readXxh32.dat' using 4:xtic(2) with boxes lc rgb "#4daf4a" notitle
+plot '4-strKey-seq-readXxh64.dat' using 4:xtic(2) with boxes lc rgb "#4daf4a" notitle
 
 set title "Iterate Sequentially"
 set style fill solid 0.25 border
@@ -744,7 +744,7 @@ jq -r '.[] | select(.params.intKey == "true") |
   "true \"\($bench).\($impl)\" false \(.primaryMetric.score)"' out-libs-4.json > 4-intKey-rnd-all.dat
 
 # Split by benchmark type and remove benchmark prefix from labels
-for BENCH in readCrc readKey readRev readSeq readXxh32 write; do
+for BENCH in readCrc readKey readRev readSeq readXxh64 write; do
   grep "\"${BENCH}\." 4-intKey-rnd-all.dat | sed "s/\"${BENCH}\./\"/g" > 4-intKey-rnd-${BENCH}.dat
 done
 
@@ -770,9 +770,9 @@ set title "Write Entry"
 set style fill solid 0.25 border
 plot '4-intKey-rnd-write.dat' using 4:xtic(2) with boxes lc rgb "#ff7f00" notitle
 
-set title "Calculate xxHash32"
+set title "Calculate xxHash64"
 set style fill solid 0.25 border
-plot '4-intKey-rnd-readXxh32.dat' using 4:xtic(2) with boxes lc rgb "#4daf4a" notitle
+plot '4-intKey-rnd-readXxh64.dat' using 4:xtic(2) with boxes lc rgb "#4daf4a" notitle
 
 set title "Iterate Sequentially"
 set style fill solid 0.25 border
@@ -813,7 +813,7 @@ jq -r '.[] | select(.params.intKey == "false") |
   "false \"\($bench).\($impl)\" false \(.primaryMetric.score)"' out-libs-4.json > 4-strKey-rnd-all.dat
 
 # Split by benchmark type and remove benchmark prefix from labels
-for BENCH in readCrc readKey readRev readSeq readXxh32 write; do
+for BENCH in readCrc readKey readRev readSeq readXxh64 write; do
   grep "\"${BENCH}\." 4-strKey-rnd-all.dat | sed "s/\"${BENCH}\./\"/g" > 4-strKey-rnd-${BENCH}.dat
 done
 
@@ -839,9 +839,9 @@ set title "Write Entry"
 set style fill solid 0.25 border
 plot '4-strKey-rnd-write.dat' using 4:xtic(2) with boxes lc rgb "#ff7f00" notitle
 
-set title "Calculate xxHash32"
+set title "Calculate xxHash64"
 set style fill solid 0.25 border
-plot '4-strKey-rnd-readXxh32.dat' using 4:xtic(2) with boxes lc rgb "#4daf4a" notitle
+plot '4-strKey-rnd-readXxh64.dat' using 4:xtic(2) with boxes lc rgb "#4daf4a" notitle
 
 set title "Iterate Sequentially"
 set style fill solid 0.25 border
@@ -997,7 +997,7 @@ rm -f 5-size.gnuplot
 echo "  Generated 5-size.svg and 5-size.md"
 
 # Extract Run 5 performance data for intKey-seq (integer keys, sequential access)
-# Note: Run 5 only has readKey, readSeq, and write (no readCrc, readRev, readXxh32)
+# Note: Run 5 only has readKey, readSeq, and write (no readCrc, readRev, readXxh64)
 jq -r '.[] | select(.params.intKey == "true") |
   select(.params.sequential == "true") |
   select(.params.num == "'${NUM_ENTRIES_5}'") |
@@ -1119,7 +1119,7 @@ cat >> README.md <<'EOF'
 This run tests larger value sizes (2,026 bytes) to explore behavior at higher
 memory workloads. Based on Run 4 showing that integer and string keys perform
 effectively the same, this run only includes integer keys. Similarly, to reduce
-execution time, the `readRev`, `readCrc` and `readXxh32` benchmarks are
+execution time, the `readRev`, `readCrc` and `readXxh64` benchmarks are
 excluded (we retain `readSeq` and `readKey` to illustrate cursor and direct
 lookup performance).
 
@@ -1378,9 +1378,9 @@ set title "Write Entry"
 set style fill solid 0.25 border
 plot '4-intKey-seq-write.dat' using 4:xtic(2) with boxes lc rgb "#ff7f00" notitle
 
-set title "Calculate xxHash32"
+set title "Calculate xxHash64"
 set style fill solid 0.25 border
-plot '4-intKey-seq-readXxh32.dat' using 4:xtic(2) with boxes lc rgb "#4daf4a" notitle
+plot '4-intKey-seq-readXxh64.dat' using 4:xtic(2) with boxes lc rgb "#4daf4a" notitle
 
 set title "Iterate Sequentially"
 set style fill solid 0.25 border
@@ -1414,7 +1414,7 @@ jq -r '.[] | select(.params.intKey == "true") |
     else . end) as $impl |
   "true \"\($bench).\($impl)\" true \(.primaryMetric.score)"' out-libs-4.json > summary-all.dat
 
-for BENCH in readCrc readKey readRev readSeq readXxh32 write; do
+for BENCH in readCrc readKey readRev readSeq readXxh64 write; do
   grep "\"${BENCH}\." summary-all.dat | sed "s/\"${BENCH}\./\"/g" > 4-intKey-seq-${BENCH}.dat
 done
 

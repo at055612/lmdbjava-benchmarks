@@ -36,7 +36,7 @@ import static org.openjdk.jmh.annotations.Scope.Benchmark;
 
 import java.io.IOException;
 
-import net.jpountz.xxhash.StreamingXXHash32;
+import net.jpountz.xxhash.StreamingXXHash64;
 import net.jpountz.xxhash.XXHashFactory;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
@@ -109,7 +109,7 @@ public class LmdbJavaAgrona {
   }
 
   @Benchmark
-  public void readXxh32(final Reader r, final Blackhole bh) {
+  public void readXxh64(final Reader r, final Blackhole bh) {
     r.xxh.reset();
     bh.consume(r.c.seek(MDB_FIRST));
     do {
@@ -192,7 +192,7 @@ public class LmdbJavaAgrona {
 
     Cursor<DirectBuffer> c;
     Txn<DirectBuffer> txn;
-    StreamingXXHash32 xxh;
+    StreamingXXHash64 xxh;
 
     @Setup(Trial)
     @Override
@@ -207,7 +207,7 @@ public class LmdbJavaAgrona {
       }
       txn = env.txnRead();
       c = db.openCursor(txn);
-      xxh = XXHashFactory.nativeInstance().newStreamingHash32(0);
+      xxh = XXHashFactory.fastestJavaInstance().newStreamingHash64(0);
     }
 
     @TearDown(Trial)
