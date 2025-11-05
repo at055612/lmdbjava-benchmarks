@@ -18,4 +18,5 @@ dependency-reduced-pom.xml
 /log.txt
 /bisect
 /dev
+/lmdb
 *.backup

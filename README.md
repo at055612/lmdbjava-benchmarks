@@ -1,5 +1,6 @@
 [![Library Benchmarks](https://github.com/lmdbjava/benchmarks/workflows/Library%20Benchmarks/badge.svg)](https://github.com/lmdbjava/benchmarks/actions)
 [![Version Benchmarks](https://github.com/lmdbjava/benchmarks/workflows/Version%20Benchmarks/badge.svg)](https://github.com/lmdbjava/benchmarks/actions)
+[![LMDB Benchmarks](https://github.com/lmdbjava/benchmarks/workflows/LMDB%20Benchmarks/badge.svg)](https://github.com/lmdbjava/benchmarks/actions)
 [![License](https://img.shields.io/hexpm/l/plug.svg?maxAge=2592000)](http://www.apache.org/licenses/LICENSE-2.0.txt)
 
 # LmdbJava Benchmarks
@@ -8,6 +9,7 @@
 
 - **Library Comparisons**: [Full Benchmark](https://libraries-benchmark.lmdbjava.org) | [Smoketest](https://libraries-smoketest.lmdbjava.org)
 - **Version Regressions**: [Full Benchmark](https://versions-benchmark.lmdbjava.org) | [Smoketest](https://versions-smoketest.lmdbjava.org)
+- **LMDB Benchmarks**: [Full Benchmark](https://lmdb-benchmark.lmdbjava.org) | [Smoketest](https://lmdb-smoketest.lmdbjava.org)
 - **Historical**: [2016 Results](https://github.com/lmdbjava/benchmarks/blob/master/results/20160710/README.md)
 
 This is a [JMH](http://openjdk.java.net/projects/code-tools/jmh/) benchmark
@@ -134,6 +136,31 @@ rm -rf target/benchmark-vers
 ./run-vers.sh benchmark
 ```
 
+#### LMDB Benchmarks
+
+Use the `run-lmdb.sh` script to test LmdbJava (master) performance across different LMDB library versions:
+
+```bash
+# Quick smoke test (1K entries, fast verification)
+./run-lmdb.sh smoketest
+
+# Full benchmark using 25% of system RAM (default)
+./run-lmdb.sh benchmark
+
+# Full benchmark using 50% of system RAM
+./run-lmdb.sh benchmark 50
+```
+
+This tests LmdbJava master against 9 different LMDB library versions (0.9.18-0.9.33) to isolate LMDB native library performance characteristics from LmdbJava wrapper code.
+Results are written to `target/benchmark-lmdb/`.
+
+**Resumption:** The script skips completed LMDB versions by checking for existing result files. For a fresh run, remove the output directory:
+
+```bash
+rm -rf target/benchmark-lmdb
+./run-lmdb.sh benchmark
+```
+
 #### Running Both Benchmark Suites
 
 Use the `run-both.sh` script to run both library and version benchmarks sequentially (designed for overnight runs):
@@ -160,6 +187,12 @@ After running version regression tests, generate a version comparison report:
 
 ```bash
 ./report-vers.sh
+```
+
+After running LMDB benchmarks, generate an LMDB performance report:
+
+```bash
+./report-lmdb.sh
 ```
 
 Reports generate:

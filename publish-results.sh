@@ -64,9 +64,12 @@ if grep -q "## LmdbJava Library Comparison Benchmarks" "${README}"; then
 elif grep -q "## LmdbJava Performance Regression Testing" "${README}"; then
   BENCH_TYPE="versions"
   echo "  Detected: Version regression benchmarks"
+elif grep -q "## LMDB Library Performance Analysis" "${README}"; then
+  BENCH_TYPE="lmdb"
+  echo "  Detected: LMDB library benchmarks"
 else
   echo "ERROR: Could not determine benchmark type from ${README}"
-  echo "Expected heading: '## LmdbJava Library Comparison Benchmarks' or '## LmdbJava Performance Regression Testing'"
+  echo "Expected heading: '## LmdbJava Library Comparison Benchmarks', '## LmdbJava Performance Regression Testing', or '## LMDB Library Performance Analysis'"
   exit 1
 fi
 

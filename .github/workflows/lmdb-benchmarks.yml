@@ -1,0 +1,48 @@
+name: LMDB Benchmarks
+
+on:
+  # Manual trigger
+  workflow_dispatch:
+
+  # Daily at 4am UTC (offset from other workflows)
+  schedule:
+    - cron: '0 4 * * *'
+
+jobs:
+  benchmark:
+    name: Run LMDB Benchmarks
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v5
+
+    - name: Set up JDK
+      uses: actions/setup-java@v5
+      with:
+        java-version: '25'
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Build benchmarks JAR
+      run: mvn -B clean package -DskipTests
+
+    - name: Install dependencies for report generation and LMDB compilation
+      run: sudo apt-get update && sudo apt-get install -y gnuplot jq gcc make
+
+    - name: Run LMDB benchmarks (smoketest mode, compiles LMDB libraries automatically)
+      run: ./run-lmdb.sh smoketest
+      timeout-minutes: 60
+
+    - name: Generate LMDB report
+      run: ./report-lmdb.sh
+
+    - name: Install wrangler
+      run: npm install -g wrangler
+
+    - name: Publish results to Cloudflare Pages
+      run: ./publish-results.sh
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
