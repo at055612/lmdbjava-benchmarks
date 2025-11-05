@@ -39,15 +39,19 @@ fi
 echo "Detected RAM: ${TOTAL_RAM_GB} GB"
 
 # LMDB tags to test (can be tags or commit hashes)
-# Strategy: Last release per calendar year for year-over-year performance evolution
+# Strategy: Comprehensive coverage with multiple releases per year to identify performance changes
 LMDB_TAGS=(
   "LMDB_0.9.17"  # 2015-11-30
+  "LMDB_0.9.18"  # 2016-02-05
   "LMDB_0.9.19"  # 2016-12-28
   "LMDB_0.9.21"  # 2017-06-01
+  "LMDB_0.9.22"  # 2018-03-22
   "LMDB_0.9.23"  # 2018-12-19
   "LMDB_0.9.24"  # 2019-07-19
   "LMDB_0.9.27"  # 2020-10-26
+  "LMDB_0.9.28"  # 2021-03-06
   "LMDB_0.9.29"  # 2021-03-16
+  "LMDB_0.9.30"  # 2022-07-21
   "LMDB_0.9.31"  # 2023-07-10
   "LMDB_0.9.33"  # 2024-05-21
 )
@@ -63,7 +67,7 @@ case $MODE in
 
   benchmark)
     # Production benchmark with full warmup and iterations
-    ITER_OPTS="-wi 3 -i 3 -f 3"
+    ITER_OPTS="-wi 1 -i 3 -f 1"
     R_OPTS="-r 120s"
 
     # Calculate max RAM in bytes (RAM_PERCENT of total)
