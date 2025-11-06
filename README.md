@@ -161,19 +161,19 @@ rm -rf target/benchmark-lmdb
 ./run-lmdb.sh benchmark
 ```
 
-#### Running Both Benchmark Suites
+#### Running All Benchmark Suites
 
-Use the `run-both.sh` script to run both library and version benchmarks sequentially (designed for overnight runs):
+Use the `run-all.sh` script to run all three benchmark suites sequentially (designed for overnight runs):
 
 ```bash
-# Run both benchmarks using 25% of system RAM (default)
-./run-both.sh
+# Run all benchmarks using 25% of system RAM (default)
+./run-all.sh
 
-# Run both benchmarks using 50% of system RAM
-./run-both.sh 50
+# Run all benchmarks using 50% of system RAM
+./run-all.sh 50
 ```
 
-This will run library comparison benchmarks followed by version regression benchmarks, both in full benchmark mode with 120s iterations. Expect several hours of runtime depending on your system.
+This will run LMDB library comparison, library comparison and version regression benchmarks, all in full benchmark mode with 120s iterations. Expect several hours of runtime depending on your system.
 
 ### Generating Reports
 
@@ -196,9 +196,8 @@ After running LMDB benchmarks, generate an LMDB performance report:
 ```
 
 Reports generate:
-- `target/benchmark/README.md` - Full markdown report with charts
-- `target/benchmark/index.html` - HTML viewer with embedded charts (open in browser)
-- Various SVG charts and supporting files
+- `target/benchmark/index.html` - Pure HTML report with embedded SVG charts
+- Various SVG chart files
 
 ### Publishing Reports
 
@@ -221,10 +220,10 @@ Reports are published to:
 - [versions-benchmark.lmdbjava.org](https://versions-benchmark.lmdbjava.org) - Full version regression analysis
 
 **Workflow for curated reports:**
-1. Run full benchmarks: `./run-both.sh` (or individually with `./run-libs.sh benchmark` and `./run-vers.sh benchmark`)
-2. Generate reports: `./report-libs.sh` and `./report-vers.sh`
+1. Run full benchmarks: `./run-all.sh` (or individually with `./run-lmdb.sh benchmark`, `./run-libs.sh benchmark` and `./run-vers.sh benchmark`)
+2. Generate reports: `./report-lmdb.sh`, `./report-libs.sh` and `./report-vers.sh`
 3. Review and edit commentary in report scripts if needed, then re-run
-4. Publish: `./publish-results.sh` (run twice, once after each report generation)
+4. Publish: `./publish-results.sh` (run once after each report generation)
 
 ### Performance Bisection
 
