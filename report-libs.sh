@@ -332,7 +332,7 @@ rm 1-writeMap.gnuplot
 echo "  Generated 1-writeMap-writes.svg"
 
 # Append Run 1 section to HTML
-cat >> index.html <<'EOHTML'
+cat >> index.html <<EOHTML
 
   <h2>Run 1: LMDB Configuration Options</h2>
 
@@ -343,8 +343,15 @@ cat >> index.html <<'EOHTML'
   <h3>Force Safe</h3>
 
   <figure>
-    <img src="1-forceSafe-reads.svg" alt="LmdbJava ByteBuffer Safe vs Unsafe Overhead" style="max-width: 100%; height: auto;">
+EOHTML
+
+emit_img "1-forceSafe-reads.svg" "LmdbJava ByteBuffer Safe vs Unsafe Overhead" >> index.html
+
+cat >> index.html <<'EOHTML'
   </figure>
+EOHTML
+
+cat >> index.html <<'EOHTML'
 
   <p>LmdbJava supports multiple buffer types including Java's <code>ByteBuffer</code> in both
   safe and unsafe modes. The unsafe mode (default) uses <code>sun.misc.Unsafe</code> for
@@ -355,7 +362,12 @@ cat >> index.html <<'EOHTML'
   <h3>Sync</h3>
 
   <figure>
-    <img src="1-sync-writes.svg" alt="LMDB Sync Impact on Writes" style="max-width: 100%; height: auto;">
+EOHTML
+
+emit_img "1-sync-writes.svg" "LMDB Sync Impact on Writes" >> index.html
+
+cat >> index.html <<'EOHTML'
+
   </figure>
 
   <p>This graph shows the impact of LMDB's <code>MDB_NOSYNC</code> flag on write performance.
@@ -366,7 +378,12 @@ cat >> index.html <<'EOHTML'
   <h3>Write Map</h3>
 
   <figure>
-    <img src="1-writeMap-writes.svg" alt="LMDB Write Map Impact" style="max-width: 100%; height: auto;">
+EOHTML
+
+emit_img "1-writeMap-writes.svg" "LMDB Write Map Impact" >> index.html
+
+cat >> index.html <<'EOHTML'
+
   </figure>
 
   <p>LMDB's <code>MDB_WRITEMAP</code> flag enables a writable memory map, improving write
@@ -418,7 +435,12 @@ cat >> index.html <<'EOHTML'
   on the horizontal axis.</p>
 
   <figure>
-    <img src="2-size.svg" alt="Native Library Disk Use" style="max-width: 100%; height: auto;">
+EOHTML
+
+emit_img "2-size.svg" "Native Library Disk Use" >> index.html
+
+cat >> index.html <<'EOHTML'
+
   </figure>
 
   <p>As shown, LevelDB and RocksDB achieve consistent performance across value sizes.
@@ -478,7 +500,12 @@ cat >> index.html <<'EOHTML'
   sequential integer keys X 8,176 byte values.</p>
 
   <figure>
-    <img src="3-batchSize-writes.svg" alt="Native LSM Write Speed by Batch Size" style="max-width: 100%; height: auto;">
+EOHTML
+
+emit_img "3-batchSize-writes.svg" "Native LSM Write Speed by Batch Size" >> index.html
+
+cat >> index.html <<'EOHTML'
+
   </figure>
 
   <p>Testing found that RocksDB failed with insufficient file handles when using
@@ -869,7 +896,12 @@ cat >> index.html <<'EOHTML'
   <h3>Storage Use</h3>
 
   <figure>
-    <img src="4-size.svg" alt="Library Disk Use" style="max-width: 100%; height: auto;">
+EOHTML
+
+emit_img "4-size.svg" "Library Disk Use" >> index.html
+
+cat >> index.html <<'EOHTML'
+
   </figure>
 
 EOHTML
@@ -889,7 +921,12 @@ cat >> index.html <<'EOHTML'
   <h3>Sequential Access (Integers)</h3>
 
   <figure>
-    <img src="4-intKey-seq.svg" alt="Sequential Integer Keys" style="max-width: 100%; height: auto;">
+EOHTML
+
+emit_img "4-intKey-seq.svg" "Sequential Integer Keys" >> index.html
+
+cat >> index.html <<'EOHTML'
+
   </figure>
 
   <p>We start with the most mechanically sympathetic workload. If you have integer
@@ -900,7 +937,12 @@ cat >> index.html <<'EOHTML'
   <h3>Sequential Access (String)</h3>
 
   <figure>
-    <img src="4-strKey-seq.svg" alt="Sequential String Keys" style="max-width: 100%; height: auto;">
+EOHTML
+
+emit_img "4-strKey-seq.svg" "Sequential String Keys" >> index.html
+
+cat >> index.html <<'EOHTML'
+
   </figure>
 
   <p>Here we simply run the same benchmark as before, but with string keys instead
@@ -912,7 +954,12 @@ cat >> index.html <<'EOHTML'
   <h3>Random Access (Integers)</h3>
 
   <figure>
-    <img src="4-intKey-rnd.svg" alt="Random Integer Keys" style="max-width: 100%; height: auto;">
+EOHTML
+
+emit_img "4-intKey-rnd.svg" "Random Integer Keys" >> index.html
+
+cat >> index.html <<'EOHTML'
+
   </figure>
 
   <p>Next up we farewell mechanical sympathy and apply some random workloads. Here
@@ -924,7 +971,12 @@ cat >> index.html <<'EOHTML'
   <h3>Random Access (Strings)</h3>
 
   <figure>
-    <img src="4-strKey-rnd.svg" alt="Random String Keys" style="max-width: 100%; height: auto;">
+EOHTML
+
+emit_img "4-strKey-rnd.svg" "Random String Keys" >> index.html
+
+cat >> index.html <<'EOHTML'
+
   </figure>
 
   <p>This benchmark is the same as the previous, except with our zero-padded string
@@ -1137,7 +1189,12 @@ cat >> index.html <<'EOHTML'
   <h3>Storage Use</h3>
 
   <figure>
-    <img src="5-size.svg" alt="Library Disk Use 2,026 Byte Values" style="max-width: 100%; height: auto;">
+EOHTML
+
+emit_img "5-size.svg" "Library Disk Use 2,026 Byte Values" >> index.html
+
+cat >> index.html <<'EOHTML'
+
   </figure>
 
 EOHTML
@@ -1152,7 +1209,12 @@ cat >> index.html <<'EOHTML'
   <h3>Sequential Access</h3>
 
   <figure>
-    <img src="5-intKey-seq.svg" alt="Sequential 2,026 Byte Values" style="max-width: 100%; height: auto;">
+EOHTML
+
+emit_img "5-intKey-seq.svg" "Sequential 2,026 Byte Values" >> index.html
+
+cat >> index.html <<'EOHTML'
+
   </figure>
 
   <p>Starting with the most optimistic scenario of sequential keys, we see LMDB
@@ -1163,7 +1225,12 @@ cat >> index.html <<'EOHTML'
   <h3>Random Access</h3>
 
   <figure>
-    <img src="5-intKey-rnd.svg" alt="Random 2,026 Byte Values" style="max-width: 100%; height: auto;">
+EOHTML
+
+emit_img "5-intKey-rnd.svg" "Random 2,026 Byte Values" >> index.html
+
+cat >> index.html <<'EOHTML'
+
   </figure>
 
   <p>LMDB easily remains the fastest with random reads. However, random writes
@@ -1318,7 +1385,12 @@ cat >> index.html <<'EOHTML'
   <h4>Storage</h4>
 
   <figure>
-    <img src="6-size-4080.svg" alt="Library Disk Use 4,080 Byte Values" style="max-width: 100%; height: auto;">
+EOHTML
+
+emit_img "6-size-4080.svg" "Library Disk Use 4,080 Byte Values" >> index.html
+
+cat >> index.html <<'EOHTML'
+
   </figure>
 
 EOHTML
@@ -1332,7 +1404,12 @@ cat >> index.html <<'EOHTML'
   <h4>Performance</h4>
 
   <figure>
-    <img src="6-intKey-rnd-4080.svg" alt="Random 4,080 Byte Values" style="max-width: 100%; height: auto;">
+EOHTML
+
+emit_img "6-intKey-rnd-4080.svg" "Random 4,080 Byte Values" >> index.html
+
+cat >> index.html <<'EOHTML'
+
   </figure>
 
   <p>We can see the larger value sizes are starting to equal out the write speeds.
@@ -1345,7 +1422,12 @@ cat >> index.html <<'EOHTML'
   <h4>Storage</h4>
 
   <figure>
-    <img src="6-size-8176.svg" alt="Library Disk Use 8,176 Byte Values" style="max-width: 100%; height: auto;">
+EOHTML
+
+emit_img "6-size-8176.svg" "Library Disk Use 8,176 Byte Values" >> index.html
+
+cat >> index.html <<'EOHTML'
+
   </figure>
 
 EOHTML
@@ -1359,7 +1441,12 @@ cat >> index.html <<'EOHTML'
   <h4>Performance</h4>
 
   <figure>
-    <img src="6-intKey-rnd-8176.svg" alt="Random 8,176 Byte Values" style="max-width: 100%; height: auto;">
+EOHTML
+
+emit_img "6-intKey-rnd-8176.svg" "Random 8,176 Byte Values" >> index.html
+
+cat >> index.html <<'EOHTML'
+
   </figure>
 
   <p>Now that much larger values are in use, we start to see the LSM implementations
@@ -1370,7 +1457,12 @@ cat >> index.html <<'EOHTML'
   <h4>Storage</h4>
 
   <figure>
-    <img src="6-size-16368.svg" alt="Library Disk Use 16,368 Byte Values" style="max-width: 100%; height: auto;">
+EOHTML
+
+emit_img "6-size-16368.svg" "Library Disk Use 16,368 Byte Values" >> index.html
+
+cat >> index.html <<'EOHTML'
+
   </figure>
 
 EOHTML
@@ -1385,7 +1477,12 @@ cat >> index.html <<'EOHTML'
   <h4>Performance</h4>
 
   <figure>
-    <img src="6-intKey-rnd-16368.svg" alt="Random 16,368 Byte Values" style="max-width: 100%; height: auto;">
+EOHTML
+
+emit_img "6-intKey-rnd-16368.svg" "Random 16,368 Byte Values" >> index.html
+
+cat >> index.html <<'EOHTML'
+
   </figure>
 
   <p>The write amplification issue seen with the earlier 8,176 byte benchmark
@@ -1467,7 +1564,12 @@ cat >> index.html <<'EOHTML'
   <h2>Conclusion</h2>
 
   <figure>
-    <img src="summary.svg" alt="Performance Summary" style="max-width: 100%; height: auto;">
+EOHTML
+
+emit_img "summary.svg" "Performance Summary" >> index.html
+
+cat >> index.html <<'EOHTML'
+
   </figure>
 
   <p>After testing various workloads across different value sizes, we have seen a

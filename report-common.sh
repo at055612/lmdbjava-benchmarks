@@ -49,6 +49,20 @@ get_benchmark_mode() {
   fi
 }
 
+# Calculate SHA256 hash for cache busting
+get_file_hash() {
+  local file=$1
+  sha256sum "$file" | cut -d' ' -f1
+}
+
+# Emit img tag with cache-busting hash
+emit_img() {
+  local filename=$1
+  local alt_text=$2
+  local hash=$(get_file_hash "$filename")
+  echo "    <img src=\"${filename}?v=${hash}\" alt=\"${alt_text}\" style=\"max-width: 100%; height: auto;\">"
+}
+
 # Get LmdbJava git metadata (from files written by run scripts in results directory)
 # Takes data directory as parameter
 get_lmdbjava_branch() {

@@ -100,24 +100,60 @@ set ylabel "ms / operation"
 set xlabel ""
 set xtics nomirror rotate by -270
 set title "Read by Key"
-plot 'lmdb-readKey.dat' using 2:xtic(1) with boxes lc rgb "#984ea3" notitle
+plot 'lmdb-readKey.dat' using 2:xtic(1) with boxes lc rgb "#984ea3" notitle, \
+     '' using 0:2 smooth bezier with lines lc rgb "#984ea3" lw 2 dashtype 2 notitle
 set title "Write Entry"
-plot 'lmdb-write.dat' using 2:xtic(1) with boxes lc rgb "#ff7f00" notitle
+plot 'lmdb-write.dat' using 2:xtic(1) with boxes lc rgb "#ff7f00" notitle, \
+     '' using 0:2 smooth bezier with lines lc rgb "#ff7f00" lw 2 dashtype 2 notitle
 set title "Calculate xxHash64"
-plot 'lmdb-readXxh64.dat' using 2:xtic(1) with boxes lc rgb "#4daf4a" notitle
+plot 'lmdb-readXxh64.dat' using 2:xtic(1) with boxes lc rgb "#4daf4a" notitle, \
+     '' using 0:2 smooth bezier with lines lc rgb "#4daf4a" lw 2 dashtype 2 notitle
 set title "Iterate Sequentially"
-plot 'lmdb-readSeq.dat' using 2:xtic(1) with boxes lc rgb "#377eb8" notitle
+plot 'lmdb-readSeq.dat' using 2:xtic(1) with boxes lc rgb "#377eb8" notitle, \
+     '' using 0:2 smooth bezier with lines lc rgb "#377eb8" lw 2 dashtype 2 notitle
 set title "Iterate Reverse"
-plot 'lmdb-readRev.dat' using 2:xtic(1) with boxes lc rgb "#ffff33" notitle
+plot 'lmdb-readRev.dat' using 2:xtic(1) with boxes lc rgb "#ffff33" notitle, \
+     '' using 0:2 smooth bezier with lines lc rgb "#ffff33" lw 2 dashtype 2 notitle
 set title "Calculate CRC32"
-plot 'lmdb-readCrc.dat' using 2:xtic(1) with boxes lc rgb "#e41a1c" notitle
+plot 'lmdb-readCrc.dat' using 2:xtic(1) with boxes lc rgb "#e41a1c" notitle, \
+     '' using 0:2 smooth bezier with lines lc rgb "#e41a1c" lw 2 dashtype 2 notitle
 unset multiplot
 GNUPLOT
 
 gnuplot lmdb-multiplot.gnuplot
-rm -f lmdb-multiplot.gnuplot lmdb-*.dat
+
+# Generate consolidated trend view (normalized, no y-axis scale)
+# Normalize data files (divide by first value)
+for BENCH in readCrc readKey readRev readSeq readXxh64 write; do
+  FIRST_VAL=$(awk 'NR==1 {print $2}' "lmdb-${BENCH}.dat")
+  awk -v first="$FIRST_VAL" '{print $1, $2/first}' "lmdb-${BENCH}.dat" > "lmdb-${BENCH}-norm.dat"
+done
+
+cat > lmdb-trends.gnuplot <<'GNUPLOT'
+set terminal svg size 1000,700 noenhanced
+set output 'lmdb-trends.svg'
+set title "Trend Correlation Across LMDB Releases\nNormalized to Earliest Build (1.0 = baseline, lower is better)"
+set xlabel ""
+set xtics nomirror rotate by -270
+set ylabel "Relative Latency"
+set grid x y
+set key top right
+plot 'lmdb-readSeq-norm.dat' using 0:2:xtic(1) smooth bezier with lines lc rgb "#377eb8" lw 2 title "Seq", \
+     'lmdb-readKey-norm.dat' using 0:2:xtic(1) smooth bezier with lines lc rgb "#984ea3" lw 2 title "Read Key", \
+     'lmdb-write-norm.dat' using 0:2:xtic(1) smooth bezier with lines lc rgb "#ff7f00" lw 2 title "Write", \
+     'lmdb-readXxh64-norm.dat' using 0:2:xtic(1) smooth bezier with lines lc rgb "#4daf4a" lw 2 title "XXH64", \
+     'lmdb-readRev-norm.dat' using 0:2:xtic(1) smooth bezier with lines lc rgb "#ffff33" lw 2 title "Rev", \
+     'lmdb-readCrc-norm.dat' using 0:2:xtic(1) smooth bezier with lines lc rgb "#e41a1c" lw 2 title "CRC32"
+GNUPLOT
+
+gnuplot lmdb-trends.gnuplot
+rm -f lmdb-multiplot.gnuplot lmdb-trends.gnuplot lmdb-*.dat lmdb-*-norm.dat
 
 echo "Generating HTML report..."
+
+# Calculate SHA256 hashes for JavaScript onclick handlers
+COMPARISON_HASH=$(get_file_hash lmdb-comparison.svg)
+TRENDS_HASH=$(get_file_hash lmdb-trends.svg)
 
 # Generate pure HTML report
 emit_html_header "LMDB Library Performance Analysis" > index.html
@@ -127,11 +163,17 @@ emit_smoketest_warning "$BENCH_MODE" >> index.html
 cat >> index.html <<EOHTML
 
   <figure>
-    <img src="lmdb-comparison.svg" alt="LMDB Library Performance Analysis" style="max-width: 100%; height: auto;">
+    <img id="chart-display" src="lmdb-comparison.svg?v=${COMPARISON_HASH}" alt="LMDB Library Performance Analysis" style="max-width: 100%; height: auto;">
   </figure>
 
+  <p style="text-align: center; margin-top: 10px;">
+    <a href="#" id="results-link" onclick="document.getElementById('chart-display').src='lmdb-comparison.svg?v=${COMPARISON_HASH}'; document.getElementById('results-link').style.fontWeight='bold'; document.getElementById('trend-link').style.fontWeight='normal'; return false;" style="font-weight: bold; color: #0366d6; text-decoration: none;">Results</a>
+    <span style="color: #666;"> | </span>
+    <a href="#" id="trend-link" onclick="document.getElementById('chart-display').src='lmdb-trends.svg?v=${TRENDS_HASH}'; document.getElementById('results-link').style.fontWeight='normal'; document.getElementById('trend-link').style.fontWeight='bold'; return false;" style="color: #0366d6; text-decoration: none;">Trend</a>
+  </p>
+
   <h2>Performance Analysis</h2>
-  <p>The following tables show each benchmark ranked by performance, with percentage difference from the fastest LMDB library build.
+  <p>The following tables show each benchmark ranked by latency (smaller is better), with percentage difference from the fastest LMDB library build.
   The <strong>latest tag</strong> (${LATEST_TAG}) is highlighted in bold.</p>
 
 EOHTML

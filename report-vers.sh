@@ -124,7 +124,11 @@ emit_smoketest_warning "$BENCH_MODE" >> index.html
 cat >> index.html <<EOHTML
 
   <figure>
-    <img src="version-comparison.svg" alt="LmdbJava Performance Regression Testing" style="max-width: 100%; height: auto;">
+EOHTML
+
+emit_img "version-comparison.svg" "LmdbJava Performance Regression Testing" >> index.html
+
+cat >> index.html <<'EOHTML'
   </figure>
 
   <h2>Performance Analysis</h2>
