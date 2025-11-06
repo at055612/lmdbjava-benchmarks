@@ -68,7 +68,7 @@ case $MODE in
 
   benchmark)
     # Production benchmark with full warmup and iterations
-    ITER_OPTS="-wi 1 -i 3 -f 1"
+    ITER_OPTS="-wi 2 -i 3 -f 1"
     R_OPTS="-r 120s"
 
     # Calculate max RAM in bytes (RAM_PERCENT of total)
