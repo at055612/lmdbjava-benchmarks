@@ -216,6 +216,9 @@
                   <exclude>LICENSE.txt</exclude>
                   <exclude>**/*.md</exclude>
                   <exclude>results/**</exclude>
+                  <exclude>dev/**</exclude>
+                  <exclude>bisect/**</exclude>
+                  <exclude>lmdb/**</exclude>
                 </excludes>
               </licenseSet>
             </licenseSets>
