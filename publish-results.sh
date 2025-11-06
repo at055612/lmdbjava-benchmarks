@@ -18,21 +18,15 @@
 set -euo pipefail
 
 # Publishes benchmark results to Cloudflare Pages
-# Auto-detects type and mode from target/benchmark/README.md
+# Auto-detects type and mode from target/benchmark/index.html
 
 RESULTS_DIR="target/benchmark"
-README="${RESULTS_DIR}/README.md"
+INDEX_HTML="${RESULTS_DIR}/index.html"
 
 # Check prerequisites
-if [ ! -f "${README}" ]; then
-  echo "ERROR: ${README} not found"
-  echo "Please run ./run-libs.sh or ./run-vers.sh first, followed by the corresponding report script"
-  exit 1
-fi
-
-if [ ! -f "${RESULTS_DIR}/index.html" ]; then
-  echo "ERROR: ${RESULTS_DIR}/index.html not found"
-  echo "Please run the corresponding report script (./report-libs.sh or ./report-vers.sh)"
+if [ ! -f "${INDEX_HTML}" ]; then
+  echo "ERROR: ${INDEX_HTML} not found"
+  echo "Please run ./run-libs.sh, ./run-vers.sh, or ./run-lmdb.sh first, followed by the corresponding report script"
   exit 1
 fi
 
@@ -57,24 +51,24 @@ fi
 
 echo "Analyzing benchmark results..."
 
-# Detect benchmark type from README heading
-if grep -q "## LmdbJava Library Comparison Benchmarks" "${README}"; then
+# Detect benchmark type from HTML title
+if grep -q "<title>LmdbJava Library Comparison Benchmarks</title>" "${INDEX_HTML}"; then
   BENCH_TYPE="libraries"
   echo "  Detected: Library comparison benchmarks"
-elif grep -q "## LmdbJava Performance Regression Testing" "${README}"; then
+elif grep -q "<title>LmdbJava Performance Regression Testing</title>" "${INDEX_HTML}"; then
   BENCH_TYPE="versions"
   echo "  Detected: Version regression benchmarks"
-elif grep -q "## LMDB Library Performance Analysis" "${README}"; then
+elif grep -q "<title>LMDB Library Performance Analysis</title>" "${INDEX_HTML}"; then
   BENCH_TYPE="lmdb"
   echo "  Detected: LMDB library benchmarks"
 else
-  echo "ERROR: Could not determine benchmark type from ${README}"
-  echo "Expected heading: '## LmdbJava Library Comparison Benchmarks', '## LmdbJava Performance Regression Testing', or '## LMDB Library Performance Analysis'"
+  echo "ERROR: Could not determine benchmark type from ${INDEX_HTML}"
+  echo "Expected title: 'LmdbJava Library Comparison Benchmarks', 'LmdbJava Performance Regression Testing', or 'LMDB Library Performance Analysis'"
   exit 1
 fi
 
 # Detect benchmark mode from smoketest warning
-if grep -q "⚠️ SMOKETEST RESULTS" "${README}"; then
+if grep -q "⚠️ SMOKETEST RESULTS" "${INDEX_HTML}"; then
   BENCH_MODE="smoketest"
   echo "  Detected: Smoketest mode (fast verification)"
 else

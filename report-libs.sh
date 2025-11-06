@@ -17,6 +17,11 @@
 
 set -euo pipefail
 
+# Pure HTML report generator for LmdbJava library comparison benchmarks
+
+# Source common functions
+source "$(dirname "$0")/report-common.sh"
+
 # Set data directory (input from run-libs.sh) and output directory
 DATA_DIR="target/benchmark-libs"
 WORK_DIR="target/benchmark"
@@ -58,25 +63,11 @@ echo "All prerequisites met. Generating report..."
 echo ""
 
 # Extract system information
-get_cpu_info() {
-  grep "model name" /proc/cpuinfo | head -1 | cut -d: -f2 | sed 's/^[ \t]*//'
-}
-
-get_cpu_count() {
-  grep -c "^processor" /proc/cpuinfo
-}
-
-get_total_ram_gib() {
-  awk '/MemTotal/ {printf "%.0f", $2/1024/1024}' /proc/meminfo
-}
-
-get_kernel() {
-  uname -r
-}
-
-get_java_version() {
-  java -version 2>&1 | head -1 | cut -d'"' -f2
-}
+CPU_MODEL=$(get_cpu_info)
+CPU_COUNT=$(get_cpu_count)
+RAM_GIB=$(get_total_ram_gib)
+KERNEL=$(get_kernel)
+JAVA_TAG=$(get_java_version)
 
 check_tmpfs() {
   if df -T /tmp | grep -q tmpfs; then
@@ -86,11 +77,6 @@ check_tmpfs() {
   fi
 }
 
-CPU_MODEL=$(get_cpu_info)
-CPU_COUNT=$(get_cpu_count)
-RAM_GIB=$(get_total_ram_gib)
-KERNEL=$(get_kernel)
-JAVA_VERSION=$(get_java_version)
 TMP_FS=$(check_tmpfs)
 
 # Extract library versions from pom.xml (must be done before cd)
@@ -110,16 +96,9 @@ MVSTORE_VERSION=$(get_version "h2-mvstore.version")
 XODUS_VERSION=$(get_version "xodus.version")
 CHRONICLE_VERSION=$(get_version "chronicle-map.version")
 
-# Get benchmark date (before cd)
+# Get benchmark date and mode
 BENCH_DATE=$(stat -c %y "$DATA_DIR/out-libs-1.json" | cut -d' ' -f1)
-
-# Detect benchmark mode by checking warmup iterations in the JSON
-WARMUP_ITERATIONS=$(jq -r '.[0].warmupIterations' "$DATA_DIR/out-libs-1.json")
-if [ "$WARMUP_ITERATIONS" = "0" ]; then
-  BENCH_MODE="smoketest"
-else
-  BENCH_MODE="benchmark"
-fi
+BENCH_MODE=$(get_benchmark_mode "$DATA_DIR/out-libs-1.json")
 
 # Create output directory and copy benchmark data files
 mkdir -p "$WORK_DIR"
@@ -139,7 +118,7 @@ echo "System Information:"
 echo "  CPU: $CPU_MODEL (${CPU_COUNT} cores)"
 echo "  RAM: ${RAM_GIB} GiB"
 echo "  Kernel: Linux $KERNEL"
-echo "  Java: $JAVA_VERSION"
+echo "  Java: $JAVA_TAG"
 echo "  /tmp filesystem: $TMP_FS"
 echo ""
 
@@ -156,94 +135,92 @@ echo "  Xodus: $XODUS_VERSION"
 echo "  Chronicle Map: $CHRONICLE_VERSION"
 echo ""
 
-# Start generating README.md
-cat > README.md <<EOF
-## LmdbJava Library Comparison Benchmarks
+# Start generating HTML report
+emit_html_header "LmdbJava Library Comparison Benchmarks" > index.html
+echo "  <h1>LmdbJava Library Comparison Benchmarks</h1>" >> index.html
 
-This report provides a performance evaluation of embedded key-value stores
-available to Java applications. The benchmark tests various workload sizes with
-RAM-based auto-scaling (capped at 1 million entries), testing different value
-sizes, access patterns, and implementation-specific configurations.
+cat >> index.html <<EOHTML
 
-EOF
+  <p>This report provides a performance evaluation of embedded key-value stores
+  available to Java applications. The benchmark tests various workload sizes with
+  RAM-based auto-scaling (capped at 1 million entries), testing different value
+  sizes, access patterns, and implementation-specific configurations.</p>
 
-# Add smoketest warning if applicable
-if [ "$BENCH_MODE" = "smoketest" ]; then
-  cat >> README.md <<'EOF'
-> **⚠️ SMOKETEST RESULTS**
->
-> This report was generated from a **smoketest run** and should NOT be used for
-> performance comparisons or production decisions. Smoketest results have:
-> - No warmup iterations
-> - Single iteration
-> - Minimal entry counts
-> - Short runtime
->
-> For valid performance results, run `./run-libs.sh benchmark` instead.
+EOHTML
 
-EOF
-fi
+emit_smoketest_warning "$BENCH_MODE" >> index.html
 
-cat >> README.md <<EOF
-## Methodology
+cat >> index.html <<EOHTML
 
-The benchmark was executed on ${BENCH_DATE} using
-[LmdbJava Benchmarks](https://github.com/lmdbjava/benchmarks) with the
-following configuration:
+  <h2>Methodology</h2>
 
-### Libraries Tested
+  <p>The benchmark was executed on ${BENCH_DATE} using
+  <a href="https://github.com/lmdbjava/benchmarks">LmdbJava Benchmarks</a> with the
+  following configuration:</p>
 
-| Library | Version | Abbreviation |
-| :------ | :------ | :----------- |
-| [LmdbJava](https://github.com/lmdbjava/lmdbjava) (ByteBuffer) | ${LMDBJAVA_VERSION} | LMDB BB |
-| [LmdbJava](https://github.com/lmdbjava/lmdbjava) (Agrona DirectBuffer) | ${LMDBJAVA_VERSION} | LMDB DB |
-| [LMDBJNI](https://github.com/deephacks/lmdbjni) | ${LMDBJNI_VERSION} | LMDB JNI |
-| [LWJGL](https://github.com/LWJGL/lwjgl3/) | ${LWJGL_VERSION} | LMDB JGL |
-| [LevelDB](https://github.com/fusesource/leveldbjni) | ${LEVELDB_VERSION} | LevelDB |
-| [RocksDB](http://rocksdb.org/) | ${ROCKSDB_VERSION} | RocksDB |
-| [MapDB](http://www.mapdb.org/) | ${MAPDB_VERSION} | MapDB |
-| [MVStore](http://h2database.com/html/mvstore.html) | ${MVSTORE_VERSION} | MVStore |
-| [Xodus](https://github.com/JetBrains/xodus) | ${XODUS_VERSION} | Xodus |
-| [Chronicle Map](https://github.com/OpenHFT/Chronicle-Map) | ${CHRONICLE_VERSION} | Chronicle |
+  <h3>Libraries Tested</h3>
 
-### Test Environment
+  <table>
+    <thead>
+      <tr><th>Library</th><th>Version</th><th>Abbreviation</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><a href="https://github.com/lmdbjava/lmdbjava">LmdbJava</a> (ByteBuffer)</td><td>${LMDBJAVA_VERSION}</td><td>LMDB BB</td></tr>
+      <tr><td><a href="https://github.com/lmdbjava/lmdbjava">LmdbJava</a> (Agrona DirectBuffer)</td><td>${LMDBJAVA_VERSION}</td><td>LMDB DB</td></tr>
+      <tr><td><a href="https://github.com/deephacks/lmdbjni">LMDBJNI</a></td><td>${LMDBJNI_VERSION}</td><td>LMDB JNI</td></tr>
+      <tr><td><a href="https://github.com/LWJGL/lwjgl3/">LWJGL</a></td><td>${LWJGL_VERSION}</td><td>LMDB JGL</td></tr>
+      <tr><td><a href="https://github.com/fusesource/leveldbjni">LevelDB</a></td><td>${LEVELDB_VERSION}</td><td>LevelDB</td></tr>
+      <tr><td><a href="http://rocksdb.org/">RocksDB</a></td><td>${ROCKSDB_VERSION}</td><td>RocksDB</td></tr>
+      <tr><td><a href="http://www.mapdb.org/">MapDB</a></td><td>${MAPDB_VERSION}</td><td>MapDB</td></tr>
+      <tr><td><a href="http://h2database.com/html/mvstore.html">MVStore</a></td><td>${MVSTORE_VERSION}</td><td>MVStore</td></tr>
+      <tr><td><a href="https://github.com/JetBrains/xodus">Xodus</a></td><td>${XODUS_VERSION}</td><td>Xodus</td></tr>
+      <tr><td><a href="https://github.com/OpenHFT/Chronicle-Map">Chronicle Map</a></td><td>${CHRONICLE_VERSION}</td><td>Chronicle</td></tr>
+    </tbody>
+  </table>
 
-| Component | Details |
-| :-------- | :------ |
-| CPU | ${CPU_MODEL} (${CPU_COUNT} cores) |
-| RAM | ${RAM_GIB} GiB |
-| OS | Linux ${KERNEL} (x86_64) |
-| Java | ${JAVA_VERSION} |
-| JMH | ${JMH_VERSION} |
-| Temp Directory | /tmp (${TMP_FS}) |
+EOHTML
 
-All benchmarks were executed by [JMH](http://openjdk.java.net/projects/code-tools/jmh/)
-with default operating system and JVM configuration. The \`/tmp\` directory was
-used as the work directory during each benchmark.
+emit_system_environment "$CPU_MODEL" "$CPU_COUNT" "$RAM_GIB" "$KERNEL" "$JAVA_TAG" >> index.html
 
-## Benchmark Operations
+cat >> index.html <<EOHTML
 
-The following operations are measured:
+  <h3>Benchmark Configuration</h3>
+  <ul>
+    <li><strong>JMH:</strong> ${JMH_VERSION}</li>
+    <li><strong>Temp Directory:</strong> /tmp (${TMP_FS})</li>
+  </ul>
 
-* 🟣 \`readKey\`: Fetch each entry by presenting its key
-* 🟠 \`write\`: Bulk insert entries into the store
-* 🟢 \`readXxh64\`: Iterate over entries computing XXH64 hash of keys and values
-* 🔵 \`readSeq\`: Iterate over key-ordered entries in forward order
-* 🟡 \`readRev\`: Iterate over key-ordered entries in reverse order
-* 🔴 \`readCrc\`: Iterate over entries computing CRC32 of keys and values
+  <p>All benchmarks were executed by <a href="http://openjdk.java.net/projects/code-tools/jmh/">JMH</a>
+  with default operating system and JVM configuration. The <code>/tmp</code> directory was
+  used as the work directory during each benchmark.</p>
 
-## Terminology
+  <h2>Benchmark Operations</h2>
 
-* **Int**: 32-bit signed integer key (4 bytes)
-* **Str**: 16-byte zero-padded string key (no length prefix or null terminator)
-* **Seq**: Sequential data access (ordered integers)
-* **Rnd**: Random data access (integers from Mersenne Twister)
+  <p>The following operations are measured:</p>
 
-All storage sizes reflect actual bytes consumed on disk (via POSIX stat), not
-apparent size. Chronicle Map only supports \`readKey\` and \`write\` benchmarks
-as it does not provide ordered key iteration.
+  <ul>
+    <li>🟣 <code>readKey</code>: Fetch each entry by presenting its key</li>
+    <li>🟠 <code>write</code>: Bulk insert entries into the store</li>
+    <li>🟢 <code>readXxh64</code>: Iterate over entries computing XXH64 hash of keys and values</li>
+    <li>🔵 <code>readSeq</code>: Iterate over key-ordered entries in forward order</li>
+    <li>🟡 <code>readRev</code>: Iterate over key-ordered entries in reverse order</li>
+    <li>🔴 <code>readCrc</code>: Iterate over entries computing CRC32 of keys and values</li>
+  </ul>
 
-EOF
+  <h2>Terminology</h2>
+
+  <ul>
+    <li><strong>Int</strong>: 32-bit signed integer key (4 bytes)</li>
+    <li><strong>Str</strong>: 16-byte zero-padded string key (no length prefix or null terminator)</li>
+    <li><strong>Seq</strong>: Sequential data access (ordered integers)</li>
+    <li><strong>Rnd</strong>: Random data access (integers from Mersenne Twister)</li>
+  </ul>
+
+  <p>All storage sizes reflect actual bytes consumed on disk (via POSIX stat), not
+  apparent size. Chronicle Map only supports <code>readKey</code> and <code>write</code> benchmarks
+  as it does not provide ordered key iteration.</p>
+
+EOHTML
 
 echo "Processing Run 1: LMDB Configuration Options..."
 
@@ -354,49 +331,54 @@ rm 1-writeMap.gnuplot
 
 echo "  Generated 1-writeMap-writes.svg"
 
-# Append Run 1 section to README
-cat >> README.md <<'EOF'
+# Append Run 1 section to HTML
+cat >> index.html <<'EOHTML'
 
-## Run 1: LMDB Configuration Options
+  <h2>Run 1: LMDB Configuration Options</h2>
 
-This run tests various LMDB implementation options using 100-byte values to
-determine optimal settings for subsequent benchmarks. All tests use sequential
-integer keys.
+  <p>This run tests various LMDB implementation options using 100-byte values to
+  determine optimal settings for subsequent benchmarks. All tests use sequential
+  integer keys.</p>
 
-### Force Safe
+  <h3>Force Safe</h3>
 
-![img](1-forceSafe-reads.svg)
+  <figure>
+    <img src="1-forceSafe-reads.svg" alt="LmdbJava ByteBuffer Safe vs Unsafe Overhead" style="max-width: 100%; height: auto;">
+  </figure>
 
-LmdbJava supports multiple buffer types including Java's `ByteBuffer` in both
-safe and unsafe modes. The unsafe mode (default) uses `sun.misc.Unsafe` for
-direct memory access. The graph shows consistent overhead when forcing safe
-mode, confirming that unsafe mode provides better performance and should be
-used for production workloads.
+  <p>LmdbJava supports multiple buffer types including Java's <code>ByteBuffer</code> in both
+  safe and unsafe modes. The unsafe mode (default) uses <code>sun.misc.Unsafe</code> for
+  direct memory access. The graph shows consistent overhead when forcing safe
+  mode, confirming that unsafe mode provides better performance and should be
+  used for production workloads.</p>
 
-### Sync
+  <h3>Sync</h3>
 
-![img](1-sync-writes.svg)
+  <figure>
+    <img src="1-sync-writes.svg" alt="LMDB Sync Impact on Writes" style="max-width: 100%; height: auto;">
+  </figure>
 
-This graph shows the impact of LMDB's `MDB_NOSYNC` flag on write performance.
-As expected, requiring fsync on every transaction commit is significantly slower
-than allowing the OS to manage sync operations. For maximum write performance,
-sync is disabled in subsequent benchmarks.
+  <p>This graph shows the impact of LMDB's <code>MDB_NOSYNC</code> flag on write performance.
+  As expected, requiring fsync on every transaction commit is significantly slower
+  than allowing the OS to manage sync operations. For maximum write performance,
+  sync is disabled in subsequent benchmarks.</p>
 
-### Write Map
+  <h3>Write Map</h3>
 
-![img](1-writeMap-writes.svg)
+  <figure>
+    <img src="1-writeMap-writes.svg" alt="LMDB Write Map Impact" style="max-width: 100%; height: auto;">
+  </figure>
 
-LMDB's `MDB_WRITEMAP` flag enables a writable memory map, improving write
-performance by allowing direct writes to the mapped region. The graph confirms
-that enabling write map improves write latency across all LMDB implementations.
-This setting is enabled for all subsequent benchmarks.
+  <p>LMDB's <code>MDB_WRITEMAP</code> flag enables a writable memory map, improving write
+  performance by allowing direct writes to the mapped region. The graph confirms
+  that enabling write map improves write latency across all LMDB implementations.
+  This setting is enabled for all subsequent benchmarks.</p>
 
-EOF
+EOHTML
 
 echo "Processing Run 2: Page Boundary Alignment..."
 
 # Run 2: Extract storage bytes from TXT file for random access
-# Line 159 from process.sh: grep 'sequential-false' out-2.tsv | grep 'after-close' | sed -r 's/Bytes\tafter-close\t([0-9]+)\torg.lmdbjava.bench.([a-z|A-Z]+).*-valSize-([0-9]+).*/\1 "\2 \3"/g' > 2-size.dat
 grep 'sequential-false' out-libs-2.txt | grep 'after-close' | sed -r 's/Bytes\tafter-close\t([0-9]+)\torg.lmdbjava.bench.([a-z|A-Z]+).*-valSize-([0-9]+).*/\3|\2|\1/g' | \
   sed 's/LmdbJavaAgrona/LMDB_DB/g' | \
   sed 's/LevelDb/LevelDB/g' | \
@@ -422,41 +404,42 @@ rm 2-size.gnuplot
 
 echo "  Generated 2-size.svg"
 
-# Append Run 2 section to README
-cat >> README.md <<'EOF'
+# Append Run 2 section to HTML
+cat >> index.html <<'EOHTML'
 
-## Run 2: Determine ~2/4/8/16 KB Byte Values
+  <h2>Run 2: Determine ~2/4/8/16 KB Byte Values</h2>
 
-Some of the later runs require larger value sizes in order to explore behaviour
-at higher memory workloads. This run was therefore focused on finding reasonable
-byte values around 2, 4, 8 and 16 KB. Only the native implementations were
-benchmarked.
+  <p>Some of the later runs require larger value sizes in order to explore behaviour
+  at higher memory workloads. This run was therefore focused on finding reasonable
+  byte values around 2, 4, 8 and 16 KB. Only the native implementations were
+  benchmarked.</p>
 
-This benchmark wrote randomly-ordered integer keys, with value sizes as indicated
-on the horizontal axis.
+  <p>This benchmark wrote randomly-ordered integer keys, with value sizes as indicated
+  on the horizontal axis.</p>
 
-![img](2-size.svg)
+  <figure>
+    <img src="2-size.svg" alt="Native Library Disk Use" style="max-width: 100%; height: auto;">
+  </figure>
 
-As shown, LevelDB and RocksDB achieve consistent performance across value sizes.
-LMDB shows degradation if entry sizes are not well-aligned with its page size.
-Exceeding the entry size by a single byte requires an additional page. For
-example, moving from 2,026 byte values (2,030 byte entry including the 4 byte
-integer key) to 2,027 byte values causes increased storage requirements. If
-storage space is an issue, entry sizes should reflect LMDB page sizing
-requirements. Optimal entry sizes are (in bytes) 2,030, 4,084, 8,180, 12,276 and
-so on in 4,096 byte increments.
+  <p>As shown, LevelDB and RocksDB achieve consistent performance across value sizes.
+  LMDB shows degradation if entry sizes are not well-aligned with its page size.
+  Exceeding the entry size by a single byte requires an additional page. For
+  example, moving from 2,026 byte values (2,030 byte entry including the 4 byte
+  integer key) to 2,027 byte values causes increased storage requirements. If
+  storage space is an issue, entry sizes should reflect LMDB page sizing
+  requirements. Optimal entry sizes are (in bytes) 2,030, 4,084, 8,180, 12,276 and
+  so on in 4,096 byte increments.</p>
 
-Given there is no disadvantage to LevelDB or RocksDB by using entry sizes that
-align well with LMDB page sizes, these will be used in later runs. Ensuring
-overall storage requirements are similar also enables a more reasonable comparison
-of each implementation's performance (as distinct from storage) trade-offs.
+  <p>Given there is no disadvantage to LevelDB or RocksDB by using entry sizes that
+  align well with LMDB page sizes, these will be used in later runs. Ensuring
+  overall storage requirements are similar also enables a more reasonable comparison
+  of each implementation's performance (as distinct from storage) trade-offs.</p>
 
-EOF
+EOHTML
 
 echo "Processing Run 3: LSM Batch Size Optimization..."
 
 # Run 3: Extract write performance for different batch sizes
-# Line 163-167 from process.sh
 jq -r '.[] | select(.benchmark | contains(".write")) |
   (.benchmark | split(".")[3] |
     if . == "LevelDb" then "LevelDB"
@@ -484,41 +467,43 @@ rm 3-batchSize.gnuplot
 
 echo "  Generated 3-batchSize-writes.svg"
 
-# Append Run 3 section to README
-cat >> README.md <<'EOF'
+# Append Run 3 section to HTML
+cat >> index.html <<'EOHTML'
 
-## Run 3: LevelDB and RocksDB Batch Sizes
+  <h2>Run 3: LevelDB and RocksDB Batch Sizes</h2>
 
-LevelDB and RocksDB are both LSM-based stores and benefit from inserting data in
-batches. Both implementations handled large value sizes with a variety of very
-large batch sizes. The graph below illustrates the batch size impact when writing
-sequential integer keys X 8,176 byte values.
+  <p>LevelDB and RocksDB are both LSM-based stores and benefit from inserting data in
+  batches. Both implementations handled large value sizes with a variety of very
+  large batch sizes. The graph below illustrates the batch size impact when writing
+  sequential integer keys X 8,176 byte values.</p>
 
-![img](3-batchSize-writes.svg)
+  <figure>
+    <img src="3-batchSize-writes.svg" alt="Native LSM Write Speed by Batch Size" style="max-width: 100%; height: auto;">
+  </figure>
 
-Testing found that RocksDB failed with insufficient file handles when using
-large batch sizes. This was overcome with system configuration adjustments. It
-is therefore important to consider the impact of LSM-based implementations on
-servers with file handle constraints. Such constraints may be related to memory,
-competing uses or security policies.
+  <p>Testing found that RocksDB failed with insufficient file handles when using
+  large batch sizes. This was overcome with system configuration adjustments. It
+  is therefore important to consider the impact of LSM-based implementations on
+  servers with file handle constraints. Such constraints may be related to memory,
+  competing uses or security policies.</p>
 
-One limitation of this report is it only measures the time taken for the client
-thread to complete a given read or write workload. The LSM-based implementations
-also use a separate compaction thread to rewrite the data. This thread overhead
-is therefore not measured by the benchmark and not reported here. Given the
-compaction thread remains very busy during sustained write operations, the
-LSM-based implementations reduce the availability of a second core for end user
-application workloads. This may be of concern on CPU-constrained servers.
+  <p>One limitation of this report is it only measures the time taken for the client
+  thread to complete a given read or write workload. The LSM-based implementations
+  also use a separate compaction thread to rewrite the data. This thread overhead
+  is therefore not measured by the benchmark and not reported here. Given the
+  compaction thread remains very busy during sustained write operations, the
+  LSM-based implementations reduce the availability of a second core for end user
+  application workloads. This may be of concern on CPU-constrained servers.</p>
 
-Finally, LSM-based implementations typically offer considerable tuning options.
-Users are expected to tune the store based on their workload type, storage type
-and file system configuration. Such extensive tuning was not conducted in this
-benchmark because the workload was very comfortably memory-bound and an effort
-had already been made to determine reasonable batch sizes. A production LSM
-deployment will need to tune these parameters carefully. A key feature of the
-non-LSM implementations is they do not require such tuning.
+  <p>Finally, LSM-based implementations typically offer considerable tuning options.
+  Users are expected to tune the store based on their workload type, storage type
+  and file system configuration. Such extensive tuning was not conducted in this
+  benchmark because the workload was very comfortably memory-bound and an effort
+  had already been made to determine reasonable batch sizes. A production LSM
+  deployment will need to tune these parameters carefully. A key feature of the
+  non-LSM implementations is they do not require such tuning.</p>
 
-EOF
+EOHTML
 
 echo "Processing Run 4: All Libraries with 100 Byte Values..."
 
@@ -545,9 +530,12 @@ grep 'intKey-true-num-'${NUM_ENTRIES}'-sequential-false' out-libs-4.txt | grep '
   sort -n >> 4-size-sorted.dat
 
 # Generate storage table
-cat > 4-size.md <<EOF
-| Implementation | Bytes | Overhead % |
-| :------------- | ----: | ---------: |
+cat > 4-size.html <<EOF
+  <table>
+    <thead>
+      <tr><th>Implementation</th><th>Bytes</th><th>Overhead %</th></tr>
+    </thead>
+    <tbody>
 EOF
 
 awk -v base=$(head -n 1 4-size-sorted.dat | cut -d " " -f 1) '
@@ -566,8 +554,13 @@ awk -v base=$(head -n 1 4-size-sorted.dat | cut -d " " -f 1) '
     if ((len - i) % 3 == 0 && i != len) formatted_size = formatted_size ",";
   }
 
-  printf "| %s | %s | %.2f |\n", impl, formatted_size, overhead;
-}' 4-size-sorted.dat >> 4-size.md
+  printf "      <tr><td>%s</td><td>%s</td><td>%.2f</td></tr>\n", impl, formatted_size, overhead;
+}' 4-size-sorted.dat >> 4-size.html
+
+cat >> 4-size.html <<'EOF'
+    </tbody>
+  </table>
+EOF
 
 cat > 4-size.gnuplot <<'GNUPLOT'
 set terminal svg size 800,600
@@ -586,7 +579,7 @@ GNUPLOT
 gnuplot 4-size.gnuplot
 rm 4-size.gnuplot
 
-echo "  Generated 4-size.svg and 4-size.md"
+echo "  Generated 4-size.svg and 4-size.html"
 
 # Extract Run 4 performance data for intKey-seq (integer keys, sequential access)
 jq -r '.[] | select(.params.intKey == "true") |
@@ -864,70 +857,80 @@ rm -f 4-strKey-rnd-*.dat 4-strKey-rnd-all.dat
 
 echo "  Generated 4-strKey-rnd.svg"
 
-# Append Run 4 section to README
-cat >> README.md <<'EOF'
+# Append Run 4 section to HTML
+cat >> index.html <<'EOHTML'
 
-## Run 4: All Libraries with Key and Access Pattern Variants
+  <h2>Run 4: All Libraries with Key and Access Pattern Variants</h2>
 
-This is a comprehensive test of all libraries with 100 byte values, testing
-integer vs string keys and sequential vs random access patterns. The vertical
-(y) axis of each graph uses a log scale.
+  <p>This is a comprehensive test of all libraries with 100 byte values, testing
+  integer vs string keys and sequential vs random access patterns. The vertical
+  (y) axis of each graph uses a log scale.</p>
 
-### Storage Use
+  <h3>Storage Use</h3>
 
-![img](4-size.svg)
+  <figure>
+    <img src="4-size.svg" alt="Library Disk Use" style="max-width: 100%; height: auto;">
+  </figure>
 
-EOF
+EOHTML
 
-cat 4-size.md >> README.md
+cat 4-size.html >> index.html
 
-cat >> README.md <<'EOF'
+cat >> index.html <<'EOHTML'
 
-We begin by reviewing the storage space required by each implementation's
-memory-mapped files. We can see that MVStore, Xodus, Chronicle and LevelDB are
-very efficient, requiring less than 20% overhead to store the data. LMDB
-requires around 89% more bytes than the size of a flat array, due to its B+
-tree layout and copy-on-write page allocation approach. These collectively
-provide higher read performance and LMDB MVCC ACID transactional support. As we
-will see later, this overhead reduces as the value sizes are increased.
+  <p>We begin by reviewing the storage space required by each implementation's
+  memory-mapped files. We can see that MVStore, Xodus, Chronicle and LevelDB are
+  very efficient, requiring less than 20% overhead to store the data. LMDB
+  requires around 89% more bytes than the size of a flat array, due to its B+
+  tree layout and copy-on-write page allocation approach. These collectively
+  provide higher read performance and LMDB MVCC ACID transactional support. As we
+  will see later, this overhead reduces as the value sizes are increased.</p>
 
-### Sequential Access (Integers)
+  <h3>Sequential Access (Integers)</h3>
 
-![img](4-intKey-seq.svg)
+  <figure>
+    <img src="4-intKey-seq.svg" alt="Sequential Integer Keys" style="max-width: 100%; height: auto;">
+  </figure>
 
-We start with the most mechanically sympathetic workload. If you have integer
-keys and can insert them in sequential order, the above graphs illustrate the
-type of latencies achievable across the various implementations. LMDB is clearly
-the fastest option, even (surprisingly) including writes.
+  <p>We start with the most mechanically sympathetic workload. If you have integer
+  keys and can insert them in sequential order, the above graphs illustrate the
+  type of latencies achievable across the various implementations. LMDB is clearly
+  the fastest option, even (surprisingly) including writes.</p>
 
-### Sequential Access (String)
+  <h3>Sequential Access (String)</h3>
 
-![img](4-strKey-seq.svg)
+  <figure>
+    <img src="4-strKey-seq.svg" alt="Sequential String Keys" style="max-width: 100%; height: auto;">
+  </figure>
 
-Here we simply run the same benchmark as before, but with string keys instead
-of integer keys. Our string keys are the same integers as our last benchmark,
-but this time they are recorded as a zero-padded string. LMDB continues to
-perform better than any alternative, including for writes. This confirms the
-previous result seen with sequentially-inserted integer keys.
+  <p>Here we simply run the same benchmark as before, but with string keys instead
+  of integer keys. Our string keys are the same integers as our last benchmark,
+  but this time they are recorded as a zero-padded string. LMDB continues to
+  perform better than any alternative, including for writes. This confirms the
+  previous result seen with sequentially-inserted integer keys.</p>
 
-### Random Access (Integers)
+  <h3>Random Access (Integers)</h3>
 
-![img](4-intKey-rnd.svg)
+  <figure>
+    <img src="4-intKey-rnd.svg" alt="Random Integer Keys" style="max-width: 100%; height: auto;">
+  </figure>
 
-Next up we farewell mechanical sympathy and apply some random workloads. Here
-we write the keys out in random order, and we read them back (the `readKey`
-benchmark) in that same random order. The remaining operations are all cursors
-over sequentially-ordered keys. The graphs show LMDB is consistently faster for
-all operations, even including writes.
+  <p>Next up we farewell mechanical sympathy and apply some random workloads. Here
+  we write the keys out in random order, and we read them back (the <code>readKey</code>
+  benchmark) in that same random order. The remaining operations are all cursors
+  over sequentially-ordered keys. The graphs show LMDB is consistently faster for
+  all operations, even including writes.</p>
 
-### Random Access (Strings)
+  <h3>Random Access (Strings)</h3>
 
-![img](4-strKey-rnd.svg)
+  <figure>
+    <img src="4-strKey-rnd.svg" alt="Random String Keys" style="max-width: 100%; height: auto;">
+  </figure>
 
-This benchmark is the same as the previous, except with our zero-padded string
-keys. There are no surprises; we see similar results as previously reported.
+  <p>This benchmark is the same as the previous, except with our zero-padded string
+  keys. There are no surprises; we see similar results as previously reported.</p>
 
-EOF
+EOHTML
 
 echo "Processing Run 5: Large Value Testing..."
 
@@ -953,9 +956,12 @@ grep 'intKey-true-num-'${NUM_ENTRIES_5}'-sequential-false.*valSize-2026' out-lib
   sort -n >> 5-size-sorted.dat
 
 # Generate storage table
-cat > 5-size.md <<EOF
-| Implementation | Bytes | Overhead % |
-| :------------- | ----: | ---------: |
+cat > 5-size.html <<EOF
+  <table>
+    <thead>
+      <tr><th>Implementation</th><th>Bytes</th><th>Overhead %</th></tr>
+    </thead>
+    <tbody>
 EOF
 
 awk -v base=$(head -n 1 5-size-sorted.dat | cut -d " " -f 1) '
@@ -974,8 +980,13 @@ awk -v base=$(head -n 1 5-size-sorted.dat | cut -d " " -f 1) '
     if ((len - i) % 3 == 0 && i != len) formatted_size = formatted_size ",";
   }
 
-  printf "| %s | %s | %.2f |\n", impl, formatted_size, overhead;
-}' 5-size-sorted.dat >> 5-size.md
+  printf "      <tr><td>%s</td><td>%s</td><td>%.2f</td></tr>\n", impl, formatted_size, overhead;
+}' 5-size-sorted.dat >> 5-size.html
+
+cat >> 5-size.html <<'EOF'
+    </tbody>
+  </table>
+EOF
 
 cat > 5-size.gnuplot <<'GNUPLOT'
 set terminal svg size 800,600
@@ -994,7 +1005,7 @@ GNUPLOT
 gnuplot 5-size.gnuplot
 rm -f 5-size.gnuplot
 
-echo "  Generated 5-size.svg and 5-size.md"
+echo "  Generated 5-size.svg and 5-size.html"
 
 # Extract Run 5 performance data for intKey-seq (integer keys, sequential access)
 # Note: Run 5 only has readKey, readSeq, and write (no readCrc, readRev, readXxh64)
@@ -1111,49 +1122,55 @@ rm -f 5-intKey-rnd-*.dat 5-intKey-rnd-all.dat
 
 echo "  Generated 5-intKey-rnd.svg"
 
-# Append Run 5 section to README
-cat >> README.md <<'EOF'
+# Append Run 5 section to HTML
+cat >> index.html <<'EOHTML'
 
-## Run 5: Large Value Testing
+  <h2>Run 5: Large Value Testing</h2>
 
-This run tests larger value sizes (2,026 bytes) to explore behavior at higher
-memory workloads. Based on Run 4 showing that integer and string keys perform
-effectively the same, this run only includes integer keys. Similarly, to reduce
-execution time, the `readRev`, `readCrc` and `readXxh64` benchmarks are
-excluded (we retain `readSeq` and `readKey` to illustrate cursor and direct
-lookup performance).
+  <p>This run tests larger value sizes (2,026 bytes) to explore behavior at higher
+  memory workloads. Based on Run 4 showing that integer and string keys perform
+  effectively the same, this run only includes integer keys. Similarly, to reduce
+  execution time, the <code>readRev</code>, <code>readCrc</code> and <code>readXxh64</code> benchmarks are
+  excluded (we retain <code>readSeq</code> and <code>readKey</code> to illustrate cursor and direct
+  lookup performance).</p>
 
-### Storage Use
+  <h3>Storage Use</h3>
 
-![img](5-size.svg)
+  <figure>
+    <img src="5-size.svg" alt="Library Disk Use 2,026 Byte Values" style="max-width: 100%; height: auto;">
+  </figure>
 
-EOF
+EOHTML
 
-cat 5-size.md >> README.md
+cat 5-size.html >> index.html
 
-cat >> README.md <<'EOF'
+cat >> index.html <<'EOHTML'
 
-All implementations offer much better storage efficiency now that the value
-sizes have increased (from 100 bytes in Run 4 to 2,026 bytes in Run 5).
+  <p>All implementations offer much better storage efficiency now that the value
+  sizes have increased (from 100 bytes in Run 4 to 2,026 bytes in Run 5).</p>
 
-### Sequential Access
+  <h3>Sequential Access</h3>
 
-![img](5-intKey-seq.svg)
+  <figure>
+    <img src="5-intKey-seq.svg" alt="Sequential 2,026 Byte Values" style="max-width: 100%; height: auto;">
+  </figure>
 
-Starting with the most optimistic scenario of sequential keys, we see LMDB
-out-perform the alternatives for both read and write workloads. Chronicle Map's
-write performance is good, but it should be remembered that it is not
-an index suitable for ordered key iteration.
+  <p>Starting with the most optimistic scenario of sequential keys, we see LMDB
+  out-perform the alternatives for both read and write workloads. Chronicle Map's
+  write performance is good, but it should be remembered that it is not
+  an index suitable for ordered key iteration.</p>
 
-### Random Access
+  <h3>Random Access</h3>
 
-![img](5-intKey-rnd.svg)
+  <figure>
+    <img src="5-intKey-rnd.svg" alt="Random 2,026 Byte Values" style="max-width: 100%; height: auto;">
+  </figure>
 
-LMDB easily remains the fastest with random reads. However, random writes
-involving these larger values are a different story, with the two native LSM
-implementations completing the write workloads much faster than LMDB.
+  <p>LMDB easily remains the fastest with random reads. However, random writes
+  involving these larger values are a different story, with the two native LSM
+  implementations completing the write workloads much faster than LMDB.</p>
 
-EOF
+EOHTML
 
 echo "Processing Run 6: Very Large Value Testing..."
 
@@ -1179,9 +1196,12 @@ for VALSIZE in 4080 8176 16368; do
     sort -n >> 6-size-${VALSIZE}-sorted.dat
 
   # Generate storage table
-  cat > 6-size-${VALSIZE}.md <<EOF
-| Implementation | Bytes | Overhead % |
-| :------------- | ----: | ---------: |
+  cat > 6-size-${VALSIZE}.html <<EOF
+  <table>
+    <thead>
+      <tr><th>Implementation</th><th>Bytes</th><th>Overhead %</th></tr>
+    </thead>
+    <tbody>
 EOF
 
   awk -v base=$(head -n 1 6-size-${VALSIZE}-sorted.dat | cut -d " " -f 1) '
@@ -1200,8 +1220,13 @@ EOF
       if ((len - i) % 3 == 0 && i != len) formatted_size = formatted_size ",";
     }
 
-    printf "| %s | %s | %.2f |\n", impl, formatted_size, overhead;
-  }' 6-size-${VALSIZE}-sorted.dat >> 6-size-${VALSIZE}.md
+    printf "      <tr><td>%s</td><td>%s</td><td>%.2f</td></tr>\n", impl, formatted_size, overhead;
+  }' 6-size-${VALSIZE}-sorted.dat >> 6-size-${VALSIZE}.html
+
+  cat >> 6-size-${VALSIZE}.html <<'EOF'
+    </tbody>
+  </table>
+EOF
 
   # Generate storage chart
   cat > 6-size-${VALSIZE}.gnuplot <<GNUPLOT
@@ -1221,7 +1246,7 @@ GNUPLOT
   gnuplot 6-size-${VALSIZE}.gnuplot
   rm -f 6-size-${VALSIZE}.gnuplot
 
-  echo "  Generated 6-size-${VALSIZE}.svg and 6-size-${VALSIZE}.md"
+  echo "  Generated 6-size-${VALSIZE}.svg and 6-size-${VALSIZE}.html"
 
   # Extract performance data for this value size (random access only)
   jq -r '.[] | select(.params.intKey == "true") |
@@ -1277,84 +1302,96 @@ GNUPLOT
   echo "  Generated 6-intKey-rnd-${VALSIZE}.svg"
 done
 
-# Append Run 6 section to README
-cat >> README.md <<'EOF'
+# Append Run 6 section to HTML
+cat >> index.html <<'EOHTML'
 
-## Run 6: Very Large Value Testing
+  <h2>Run 6: Very Large Value Testing</h2>
 
-This run explores much larger workloads with 4-16KB value sizes. Given the
-performance of the pure Java sorting implementations (particularly for writes),
-they are not included in Run 6. The unsorted Chronicle Map continues to be
-included. Only random access patterns are tested as they represent the
-worst-case scenario.
+  <p>This run explores much larger workloads with 4-16KB value sizes. Given the
+  performance of the pure Java sorting implementations (particularly for writes),
+  they are not included in Run 6. The unsorted Chronicle Map continues to be
+  included. Only random access patterns are tested as they represent the
+  worst-case scenario.</p>
 
-### Random Access of 4,080 Byte Values
+  <h3>Random Access of 4,080 Byte Values</h3>
 
-#### Storage
+  <h4>Storage</h4>
 
-![img](6-size-4080.svg)
+  <figure>
+    <img src="6-size-4080.svg" alt="Library Disk Use 4,080 Byte Values" style="max-width: 100%; height: auto;">
+  </figure>
 
-EOF
+EOHTML
 
-cat 6-size-4080.md >> README.md
+cat 6-size-4080.html >> index.html
 
-cat >> README.md <<'EOF'
+cat >> index.html <<'EOHTML'
 
-With 4,080 byte values, storage efficiency is now excellent.
+  <p>With 4,080 byte values, storage efficiency is now excellent.</p>
 
-#### Performance
+  <h4>Performance</h4>
 
-![img](6-intKey-rnd-4080.svg)
+  <figure>
+    <img src="6-intKey-rnd-4080.svg" alt="Random 4,080 Byte Values" style="max-width: 100%; height: auto;">
+  </figure>
 
-We can see the larger value sizes are starting to equal out the write speeds.
-Chronicle Map continues to write the fastest, but it should be remembered that
-it is not an index suitable for ordered key iteration. LMDB offers the fastest
-read performance.
+  <p>We can see the larger value sizes are starting to equal out the write speeds.
+  Chronicle Map continues to write the fastest, but it should be remembered that
+  it is not an index suitable for ordered key iteration. LMDB offers the fastest
+  read performance.</p>
 
-### Random Access of 8,176 Byte Values
+  <h3>Random Access of 8,176 Byte Values</h3>
 
-#### Storage
+  <h4>Storage</h4>
 
-![img](6-size-8176.svg)
+  <figure>
+    <img src="6-size-8176.svg" alt="Library Disk Use 8,176 Byte Values" style="max-width: 100%; height: auto;">
+  </figure>
 
-EOF
+EOHTML
 
-cat 6-size-8176.md >> README.md
+cat 6-size-8176.html >> index.html
 
-cat >> README.md <<'EOF'
+cat >> index.html <<'EOHTML'
 
-The trend toward better storage efficiency with larger values has continued.
+  <p>The trend toward better storage efficiency with larger values has continued.</p>
 
-#### Performance
+  <h4>Performance</h4>
 
-![img](6-intKey-rnd-8176.svg)
+  <figure>
+    <img src="6-intKey-rnd-8176.svg" alt="Random 8,176 Byte Values" style="max-width: 100%; height: auto;">
+  </figure>
 
-Now that much larger values are in use, we start to see the LSM implementations
-slowed down by write amplification. LMDB offers the fastest reads.
+  <p>Now that much larger values are in use, we start to see the LSM implementations
+  slowed down by write amplification. LMDB offers the fastest reads.</p>
 
-### Random Access of 16,368 Byte Values
+  <h3>Random Access of 16,368 Byte Values</h3>
 
-#### Storage
+  <h4>Storage</h4>
 
-![img](6-size-16368.svg)
+  <figure>
+    <img src="6-size-16368.svg" alt="Library Disk Use 16,368 Byte Values" style="max-width: 100%; height: auto;">
+  </figure>
 
-EOF
+EOHTML
 
-cat 6-size-16368.md >> README.md
+cat 6-size-16368.html >> index.html
 
-cat >> README.md <<'EOF'
+cat >> index.html <<'EOHTML'
 
-All implementations offer very good storage space efficiency compared with a
-flat array.
+  <p>All implementations offer very good storage space efficiency compared with a
+  flat array.</p>
 
-#### Performance
+  <h4>Performance</h4>
 
-![img](6-intKey-rnd-16368.svg)
+  <figure>
+    <img src="6-intKey-rnd-16368.svg" alt="Random 16,368 Byte Values" style="max-width: 100%; height: auto;">
+  </figure>
 
-The write amplification issue seen with the earlier 8,176 byte benchmark
-continues, with the LSM implementations further slowing down.
+  <p>The write amplification issue seen with the earlier 8,176 byte benchmark
+  continues, with the LSM implementations further slowing down.</p>
 
-EOF
+EOHTML
 
 echo "Processing summary chart for conclusion..."
 
@@ -1425,186 +1462,79 @@ rm -f 4-intKey-seq-*.dat
 
 echo "  Generated summary.svg"
 
-cat >> README.md <<'EOF'
+cat >> index.html <<'EOHTML'
 
-## Conclusion
+  <h2>Conclusion</h2>
 
-![img](summary.svg)
+  <figure>
+    <img src="summary.svg" alt="Performance Summary" style="max-width: 100%; height: auto;">
+  </figure>
 
-After testing various workloads across different value sizes, we have seen a
-number of important differences between the implementations.
+  <p>After testing various workloads across different value sizes, we have seen a
+  number of important differences between the implementations.</p>
 
-Before discussing the ordered key implementations, it is noted that Chronicle
-Map offers a good option for unordered keys. It's consistently fast for both
-reads and writes, plus storage space efficient. Chronicle Map also offers a
-different scope than the other embedded key-value stores in this report. For
-example, it lacks transactions but does offer replication.
+  <p>Before discussing the ordered key implementations, it is noted that Chronicle
+  Map offers a good option for unordered keys. It's consistently fast for both
+  reads and writes, plus storage space efficient. Chronicle Map also offers a
+  different scope than the other embedded key-value stores in this report. For
+  example, it lacks transactions but does offer replication.</p>
 
-Ordered key implementations were the focus of this report. Those use cases which
-can employ ordered keys will always achieve much better read performance by
-iterating over a cursor. We saw this regardless of entry size, original write
-ordering, or even implementation. It is worth devising a key structure that
-enables ordered iteration whenever possible.
+  <p>Ordered key implementations were the focus of this report. Those use cases which
+  can employ ordered keys will always achieve much better read performance by
+  iterating over a cursor. We saw this regardless of entry size, original write
+  ordering, or even implementation. It is worth devising a key structure that
+  enables ordered iteration whenever possible.</p>
 
-Pure Java sorting implementations (MapDB, MVStore, Xodus) generally showed
-weaker performance compared with the native implementations (Chronicle Map,
-LMDB, RocksDB and LevelDB). GC tuning may improve these results.
+  <p>Pure Java sorting implementations (MapDB, MVStore, Xodus) generally showed
+  weaker performance compared with the native implementations (Chronicle Map,
+  LMDB, RocksDB and LevelDB). GC tuning may improve these results.</p>
 
-LMDB was always the fastest implementation for every read workload. This
-is unsurprising given its B+ Tree and copy-on-write design. LMDB's excellent
-read performance is sustained regardless of entry size or access pattern.
+  <p>LMDB was always the fastest implementation for every read workload. This
+  is unsurprising given its B+ Tree and copy-on-write design. LMDB's excellent
+  read performance is sustained regardless of entry size or access pattern.</p>
 
-Write workloads show more variation in the results. Small value sizes (100
-bytes) were written more quickly by LMDB than any other sorted key
-implementation. As value sizes increased toward 2 KB, this situation reversed
-and LMDB became much slower than RocksDB and LevelDB. However, once value sizes
-reached the 4 KB region, the differences between LMDB, LevelDB and RocksDB
-diminished significantly. At 8 KB and beyond, LMDB was materially faster for
-writes. This finding is readily explained by the write amplification necessary
-in LSM-based implementations.
+  <p>Write workloads show more variation in the results. Small value sizes (100
+  bytes) were written more quickly by LMDB than any other sorted key
+  implementation. As value sizes increased toward 2 KB, this situation reversed
+  and LMDB became much slower than RocksDB and LevelDB. However, once value sizes
+  reached the 4 KB region, the differences between LMDB, LevelDB and RocksDB
+  diminished significantly. At 8 KB and beyond, LMDB was materially faster for
+  writes. This finding is readily explained by the write amplification necessary
+  in LSM-based implementations.</p>
 
-All implementations became more storage space efficient as the value sizes
-increased. LMDB was relatively inefficient at small value sizes (89% overhead
-with 100 byte values) but the overhead became minimal (under 2%) by the time
-values reached 4 KB. Modern Java compression libraries such as
-[LZ4-Java](https://github.com/lz4/lz4-java) (for general-purpose cases)
-and [JavaFastPFOR](https://github.com/lemire/JavaFastPFOR) (for integers) may
-also provide enhanced storage efficiency by packing related data into chunked,
-compressed values. This may also improve performance in the case of IO
-bottlenecks, as the CPU can decompress while waiting on further IO.
+  <p>All implementations became more storage space efficient as the value sizes
+  increased. LMDB was relatively inefficient at small value sizes (89% overhead
+  with 100 byte values) but the overhead became minimal (under 2%) by the time
+  values reached 4 KB. Modern Java compression libraries such as
+  <a href="https://github.com/lz4/lz4-java">LZ4-Java</a> (for general-purpose cases)
+  and <a href="https://github.com/lemire/JavaFastPFOR">JavaFastPFOR</a> (for integers) may
+  also provide enhanced storage efficiency by packing related data into chunked,
+  compressed values. This may also improve performance in the case of IO
+  bottlenecks, as the CPU can decompress while waiting on further IO.</p>
 
-In terms of broader efficiency, LMDB operates in the same thread as its caller
-and therefore the performance reported above is a total indication of LMDB cost.
-On the other hand, RocksDB and LevelDB use a second thread for write compaction.
-This second thread may compete with application workloads on busy servers. We
-also see a similar efficiency concern around operating system file handle
-consumption. While LMDB only requires two open files, RocksDB and LevelDB both
-require tens to hundreds of thousands of open files to operate.
+  <p>In terms of broader efficiency, LMDB operates in the same thread as its caller
+  and therefore the performance reported above is a total indication of LMDB cost.
+  On the other hand, RocksDB and LevelDB use a second thread for write compaction.
+  This second thread may compete with application workloads on busy servers. We
+  also see a similar efficiency concern around operating system file handle
+  consumption. While LMDB only requires two open files, RocksDB and LevelDB both
+  require tens to hundreds of thousands of open files to operate.</p>
 
-The qualitative dimensions of each implementation should also be considered. For
-example, consider recovery time from dirty shutdown (process/OS/server crash),
-ACID transaction guarantees, inter-process usage flexibility, runtime monitoring
-requirements, hot backup support and ongoing configuration effort. In these
-situations LMDB delivers a very strong solution. For more information, see the
-[LmdbJava](https://github.com/lmdbjava/lmdbjava) features list.
+  <p>The qualitative dimensions of each implementation should also be considered. For
+  example, consider recovery time from dirty shutdown (process/OS/server crash),
+  ACID transaction guarantees, inter-process usage flexibility, runtime monitoring
+  requirements, hot backup support and ongoing configuration effort. In these
+  situations LMDB delivers a very strong solution. For more information, see the
+  <a href="https://github.com/lmdbjava/lmdbjava">LmdbJava</a> features list.</p>
 
-EOF
+EOHTML
 
-echo "Generating HTML viewer..."
-
-# Create HTML viewer with GitHub markdown CSS and markdown-it
-cat > index.html <<'HTML'
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LmdbJava Benchmarks Report</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown.min.css">
-  <style>
-    body {
-      box-sizing: border-box;
-      min-width: 200px;
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 45px;
-      background: #f5f5f5;
-    }
-    .markdown-body {
-      box-sizing: border-box;
-      background: white;
-      padding: 40px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-  </style>
-</head>
-<body>
-  <div class="markdown-body" id="content">Loading report...</div>
-  <script type="module">
-    import markdownit from 'https://cdn.jsdelivr.net/npm/markdown-it@14/+esm';
-    const md = markdownit();
-
-    // Check if we're running from file://
-    if (window.location.protocol === 'file:') {
-      document.getElementById('content').innerHTML = `
-        <div style="padding: 40px; background: #fff3cd; border: 2px solid #856404; border-radius: 8px;">
-          <h2 style="color: #856404; margin-top: 0;">⚠️ Cannot Load Report</h2>
-          <p>The report cannot be loaded when opening <code>index.html</code> directly as a file.</p>
-          <p><strong>To view this report, run a local web server:</strong></p>
-          <pre style="background: #f8f9fa; padding: 15px; border-radius: 5px; overflow-x: auto;">cd target/benchmark
-python3 -m http.server 8000</pre>
-          <p>Then open <a href="http://localhost:8000">http://localhost:8000</a> in your browser</p>
-          <p style="margin-top: 30px;"><strong>Alternatively:</strong> View <code>README.md</code> directly in any markdown viewer or on GitHub</p>
-        </div>
-      `;
-    } else {
-      fetch('README.md?hash=CACHE_BUST_HASH')
-        .then(response => {
-          if (!response.ok) throw new Error('Failed to load README.md');
-          return response.text();
-        })
-        .then(text => {
-          document.getElementById('content').innerHTML = md.render(text);
-        })
-        .catch(error => {
-          document.getElementById('content').innerHTML = `
-            <div style="padding: 40px; background: #fff3cd; border: 2px solid #856404; border-radius: 8px;">
-              <h2 style="color: #856404; margin-top: 0;">⚠️ Error Loading Report</h2>
-              <p>Failed to load README.md: ${error.message}</p>
-              <p><strong>Alternatively:</strong> View <code>README.md</code> directly in any markdown viewer</p>
-            </div>
-          `;
-        });
-    }
-  </script>
-</body>
-</html>
-HTML
-
-# Calculate SHA256 hash of README.md and inject into index.html
-README_HASH=$(sha256sum README.md | cut -d' ' -f1)
-sed -i "s/CACHE_BUST_HASH/${README_HASH}/" index.html
-
-echo "  Generated index.html"
-echo "  README.md hash: ${README_HASH}"
+emit_html_footer >> index.html
 
 echo ""
 echo "Report generation complete!"
+echo "Generated: $WORK_DIR/index.html"
 echo ""
-echo "Generated files:"
-echo "  - README.md (complete - all runs)"
-echo "  - index.html (HTML viewer with embedded charts)"
-echo "  - 1-forceSafe-reads.svg"
-echo "  - 1-sync-writes.svg"
-echo "  - 1-writeMap-writes.svg"
-echo "  - 2-size.svg"
-echo "  - 3-batchSize-writes.svg"
-echo "  - 4-size.svg and 4-size.md"
-echo "  - 4-intKey-seq.svg"
-echo "  - 4-strKey-seq.svg"
-echo "  - 4-intKey-rnd.svg"
-echo "  - 4-strKey-rnd.svg"
-echo "  - 5-size.svg and 5-size.md"
-echo "  - 5-intKey-seq.svg"
-echo "  - 5-intKey-rnd.svg"
-echo "  - 6-size-4080.svg and 6-size-4080.md"
-echo "  - 6-intKey-rnd-4080.svg"
-echo "  - 6-size-8176.svg and 6-size-8176.md"
-echo "  - 6-intKey-rnd-8176.svg"
-echo "  - 6-size-16368.svg and 6-size-16368.md"
-echo "  - 6-intKey-rnd-16368.svg"
-echo "  - summary.svg"
-echo ""
-echo "To view the HTML report:"
-echo "  cd $WORK_DIR"
-echo "  python3 -m http.server 8000"
-echo "  Then open http://localhost:8000 in your browser"
-echo ""
-echo "Alternatively, view README.md directly in your markdown viewer"
-echo ""
-echo "IMPORTANT: The generated README.md is a template based on the benchmark data."
-echo "Please review it carefully for correctness and adjust the commentary as needed"
-echo "to accurately reflect the actual results shown in the charts and tables."
+echo "Open $WORK_DIR/index.html in your browser to view the report."
 
-# Return to original directory (suppress output)
 cd - > /dev/null

@@ -101,12 +101,9 @@ case $MODE in
 esac
 
 # Create output directory outside target/ (survives mvn clean)
-FINAL_OUTPUT_DIR="lmdb/results"
+PROJECT_ROOT="$(pwd)"
+FINAL_OUTPUT_DIR="${PROJECT_ROOT}/lmdb/results"
 mkdir -p "$FINAL_OUTPUT_DIR"
-
-# Create temporary directory for results
-TEMP_OUTPUT_DIR=$(mktemp -d)
-echo "Using temporary directory: ${TEMP_OUTPUT_DIR}"
 
 # JVM flags for Java 9+ module system compatibility
 JVM_OPTS="--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.nio=ALL-UNNAMED --add-exports java.base/jdk.internal.misc=ALL-UNNAMED --add-exports java.base/sun.nio.ch=ALL-UNNAMED --add-exports jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --enable-native-access=ALL-UNNAMED"
@@ -117,18 +114,15 @@ BRANCH_DIR="target/lmdbjava-src-master"
 CACHED_BUILD=false
 
 # Check if master is already built (by checking for cached metadata and JAR)
-if [ -f "target/lmdbjava-git-commit-full.txt" ] && [ -f "target/benchmarks.jar" ]; then
-  CACHED_COMMIT=$(cat target/lmdbjava-git-commit-full.txt)
-  CACHED_COMMIT_SHORT=$(cat target/lmdbjava-git-commit-short.txt)
+if [ -f "${FINAL_OUTPUT_DIR}/lmdbjava-git-commit-full.txt" ] && [ -f "target/benchmarks.jar" ]; then
+  CACHED_COMMIT=$(cat "${FINAL_OUTPUT_DIR}/lmdbjava-git-commit-full.txt")
+  CACHED_COMMIT_SHORT=$(cat "${FINAL_OUTPUT_DIR}/lmdbjava-git-commit-short.txt")
   BRANCH_VERSION=$(grep -m 1 "<lmdbjava.version>" pom.xml | sed 's/.*<lmdbjava.version>\(.*\)<\/lmdbjava.version>.*/\1/')
 
   echo "✓ LmdbJava master already built (cached): ${BRANCH_VERSION} @ ${CACHED_COMMIT_SHORT}"
 
   GIT_REVISION_FULL=$CACHED_COMMIT
   GIT_REVISION=$CACHED_COMMIT_SHORT
-
-  # Ensure metadata files exist for report generation (may not exist if using old cache)
-  [ -f "target/lmdbjava-git-branch.txt" ] || echo "master" > target/lmdbjava-git-branch.txt
 
   CACHED_BUILD=true
 else
@@ -147,10 +141,10 @@ else
   echo "Master version: ${BRANCH_VERSION}"
   echo "Git revision: ${GIT_REVISION}"
 
-  # Save git info for report generation (before directory cleanup)
-  echo "master" > ../lmdbjava-git-branch.txt
-  echo "${GIT_REVISION}" > ../lmdbjava-git-commit-short.txt
-  echo "${GIT_REVISION_FULL}" > ../lmdbjava-git-commit-full.txt
+  # Save git info for report generation (write to results directory, persistent across runs)
+  echo "master" > "${FINAL_OUTPUT_DIR}/lmdbjava-git-branch.txt"
+  echo "${GIT_REVISION}" > "${FINAL_OUTPUT_DIR}/lmdbjava-git-commit-short.txt"
+  echo "${GIT_REVISION_FULL}" > "${FINAL_OUTPUT_DIR}/lmdbjava-git-commit-full.txt"
 
   if ! mvn clean install -DskipTests -Dfmt.skip -q; then
     cd - > /dev/null
@@ -295,7 +289,7 @@ for TAG in "${LMDB_TAGS[@]}"; do
   if [ -s "${FINAL_FILE}" ]; then
     echo "  ✓ Skipping lmdb-${TAG} (already completed)"
   else
-    run_benchmark "${TEMP_OUTPUT_DIR}/out-lmdb-${TAG}.json" "lmdb-${TAG}" "${LMDB_LIB}"
+    run_benchmark "${FINAL_OUTPUT_DIR}/out-lmdb-${TAG}.json" "lmdb-${TAG}" "${LMDB_LIB}"
   fi
   echo ""
 done
@@ -305,15 +299,6 @@ if [ -f pom.xml.backup ]; then
   cp pom.xml.backup pom.xml
   rm pom.xml.backup
 fi
-
-# Copy results from temp directory to final location
-echo ""
-echo "Copying results to ${FINAL_OUTPUT_DIR}..."
-mkdir -p "${FINAL_OUTPUT_DIR}"
-cp "${TEMP_OUTPUT_DIR}"/out-lmdb-*.json "${FINAL_OUTPUT_DIR}/" 2>/dev/null || true
-
-# Cleanup temp directory
-rm -rf "${TEMP_OUTPUT_DIR}"
 
 # Cleanup master clone
 rm -rf "${BRANCH_DIR}"
