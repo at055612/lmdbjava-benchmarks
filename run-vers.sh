@@ -40,7 +40,7 @@ echo "Detected RAM: ${TOTAL_RAM_GB} GB"
 
 # LmdbJava versions to test
 MAVEN_VERSIONS=(0.0.5 0.5.0 0.8.3 0.9.1)
-BRANCH_VERSIONS=(master)
+BRANCH_VERSIONS=(master gh-249-remove-unsignedkey)
 
 case $MODE in
   smoketest)
