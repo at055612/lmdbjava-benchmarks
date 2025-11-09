@@ -37,7 +37,7 @@
     <leveldb-api.version>0.7</leveldb-api.version>
     <leveldbjni.version>1.8</leveldbjni.version>
     <license-maven-plugin.version>4.6</license-maven-plugin.version>
-    <lmdbjava.version>0.9.1</lmdbjava.version>
+    <lmdbjava.version>0.9.2</lmdbjava.version>
     <lmdbjni.version>0.4.7</lmdbjni.version>
     <lwjgl.version>3.3.6</lwjgl.version>
     <lz4-java.version>1.8.0</lz4-java.version>
