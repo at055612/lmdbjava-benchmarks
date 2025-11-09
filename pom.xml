@@ -25,7 +25,7 @@
   <name>LmdbJava Benchmarks</name>
   <description>JMH benchmarks for LMDB and other embedded key-value stores</description>
   <properties>
-    <agrona.version>2.3.0</agrona.version>
+    <agrona.version>2.3.2</agrona.version>
     <chronicle-map.version>3.27ea1</chronicle-map.version>
     <commons-math3.version>3.6.1</commons-math3.version>
     <github.org>lmdbjava</github.org>
